@@ -6,6 +6,7 @@ Game 3D, lõi mô phỏng tất định + chế độ headless theo Test Contrac
 - Cài: `npm install`
 - Test: `npm test` (node:test, không cần build)
 - Kiểm kiểu: `npm run typecheck`
+- Bằng chứng: `npm run proof` (chạy CLI thật, sinh `docs/proof/phase-1/`; phải 100% đạt trước khi tag)
 - Headless: `node src/headless/cli.ts --seed 1 --night 1 --ticks 600 --out out/run.jsonl`
 
 ## Cấu trúc
