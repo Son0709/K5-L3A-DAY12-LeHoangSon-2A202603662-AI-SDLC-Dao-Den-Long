@@ -4,55 +4,95 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Đảo Đèn Lồng</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='17' r='9' fill='%23ffb347'/%3E%3Crect x='13' y='5' width='6' height='5' fill='%236b4a2f'/%3E%3C/svg%3E" />
   <style>
-    html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0820; font-family: "Segoe UI", system-ui, sans-serif; color: #ffe9c4; }
+    :root {
+      --sky: #0e1430; --mist: #1b2350; --lamp: #ffb347; --lamp-core: #ffe9b0; --lamp-off: #5b5f6e;
+      --gold: #f2c14e; --danger: #ff5a5f; --text: #f5f1e6; --scarf: #c8102e; --drifter: #8fa3b8;
+    }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--sky); font-family: "Segoe UI", system-ui, sans-serif; color: var(--text); }
     canvas { display: block; }
     #hud { position: fixed; inset: 0; pointer-events: none; text-shadow: 0 1px 4px #000a; }
-    .panel { position: absolute; top: 14px; left: 14px; display: grid; gap: 6px; padding: 10px 14px; background: #1a1233aa; border: 1px solid #ffb34744; border-radius: 12px; min-width: 210px; }
-    .panel.right { left: auto; right: 14px; text-align: right; min-width: 150px; }
-    .row { display: flex; justify-content: space-between; gap: 14px; font-size: 15px; }
-    .row b { color: #ffd27a; font-weight: 600; }
-    .flame { color: #ff9d3c; } .flame.off { color: #4b3d66; }
-    .dot { display: inline-block; width: 11px; height: 11px; margin-left: 4px; border-radius: 50%; background: #3a2e55; border: 1px solid #ffb34766; }
-    .dot.on { background: #ffb347; box-shadow: 0 0 8px #ffb347; }
-    .bar { height: 6px; background: #3a2e55; border-radius: 3px; overflow: hidden; }
-    .bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ffd27a, #ff9d3c); width: 0; }
-    #time { font-size: 26px; font-weight: 700; color: #ffd27a; }
-    #score { font-size: 18px; }
-    #prompt { position: absolute; bottom: 14%; left: 50%; transform: translateX(-50%); font-size: 18px; padding: 8px 16px; background: #1a1233cc; border: 1px solid #ffb34766; border-radius: 10px; display: none; }
-    #toasts { position: absolute; top: 90px; left: 50%; transform: translateX(-50%); display: grid; gap: 6px; justify-items: center; }
-    .toast { padding: 6px 14px; background: #1a1233cc; border-radius: 10px; font-size: 16px; animation: fade 2.4s forwards; }
-    .toast.good { color: #ffd27a; border: 1px solid #ffb347aa; } .toast.bad { color: #d6b8ff; border: 1px solid #8a5bd6aa; }
+    #hud.hidden { display: none; }
+    .box { position: absolute; padding: 8px 14px; background: #0e1430b8; border: 1px solid #f2c14e55; border-radius: 12px; }
+    /* top-left: flames */
+    #hud-flames { top: 14px; left: 14px; min-width: 150px; }
+    .label { font-size: 12px; opacity: .75; letter-spacing: .5px; text-transform: uppercase; }
+    #flames { font-size: 26px; letter-spacing: 6px; }
+    .flame { color: var(--lamp); } .flame.off { color: var(--lamp-off); opacity: .5; }
+    #charmBadge { margin-top: 4px; font-size: 13px; color: var(--scarf); display: none; }
+    #charmBadge b { color: var(--gold); }
+    /* top-center: clock */
+    #clock { top: 14px; left: 50%; transform: translateX(-50%); font-size: 30px; font-weight: 700; color: var(--text); min-width: 96px; text-align: center; }
+    #clock.danger { color: var(--danger); animation: pulse .8s infinite; }
+    @keyframes pulse { 50% { opacity: .35; } }
+    /* top-right: lanterns and score */
+    #hud-tr { top: 14px; right: 14px; text-align: right; min-width: 150px; }
+    .dot { display: inline-block; width: 12px; height: 12px; margin-left: 4px; border-radius: 50%; background: var(--lamp-off); border: 1px solid #ffffff33; }
+    .dot.on { background: var(--lamp); box-shadow: 0 0 8px var(--lamp); border-color: var(--lamp-core); }
+    #score { font-size: 24px; font-weight: 700; color: var(--gold); margin-top: 2px; }
+    #total { font-size: 12px; opacity: .7; }
+    /* wind banner */
+    #windBanner { position: absolute; top: 84px; left: 50%; transform: translateX(-50%); padding: 4px 14px; border-radius: 10px; background: #1b2350cc; border: 1px solid var(--drifter); color: var(--drifter); font-size: 15px; display: none; }
+    #windBanner.on { color: var(--lamp-core); border-color: var(--lamp-core); }
+    /* bottom-center: mote bar (10 cells) */
+    #moteBar { bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px; align-items: center; }
+    #moteBar .cell { width: 20px; height: 20px; border-radius: 50%; background: #ffffff14; border: 1px solid #fff6c255; }
+    #moteBar .cell.on { background: #fff6c2; box-shadow: 0 0 10px #ffe58a; border-color: #ffe58a; }
+    #moteBar .cap { margin-left: 8px; font-size: 14px; color: var(--gold); min-width: 40px; }
+    /* bottom-right: cooldown icons */
+    #cooldowns { position: absolute; bottom: 18px; right: 14px; display: flex; gap: 12px; }
+    .cd { position: relative; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; text-align: center;
+      background: conic-gradient(var(--lamp) calc(var(--p, 1) * 360deg), #0e1430cc 0); border: 2px solid #f2c14e66; }
+    .cd::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: #0e1430ee; }
+    .cd span { position: relative; font-size: 12px; line-height: 1.2; }
+    .cd b { display: block; font-size: 16px; color: var(--gold); }
+    .cd.ready { border-color: var(--lamp-core); box-shadow: 0 0 12px #ffb34788; }
+    .cd.nope b { color: var(--danger); }
+    /* prompt, arrow, toasts, hurt flash */
+    #prompt { position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); font-size: 19px; padding: 8px 18px; background: #0e1430d0; border: 1px solid var(--gold); border-radius: 10px; display: none; }
+    #prompt kbd, #card kbd { background: #1b2350; border: 1px solid #f2c14e88; border-radius: 6px; padding: 1px 8px; color: var(--gold); font-family: inherit; }
+    #arrow { position: absolute; width: 0; height: 0; display: none; border-left: 14px solid transparent; border-right: 14px solid transparent; border-bottom: 34px solid var(--lamp); filter: drop-shadow(0 0 6px var(--lamp)); }
+    #toasts { position: absolute; top: 120px; left: 50%; transform: translateX(-50%); display: grid; gap: 6px; justify-items: center; }
+    .toast { padding: 6px 14px; background: #0e1430d0; border-radius: 10px; font-size: 16px; animation: fade 2.4s forwards; }
+    .toast.good { color: var(--lamp-core); border: 1px solid #ffb347aa; } .toast.bad { color: var(--danger); border: 1px solid #ff5a5faa; }
     @keyframes fade { 0% { opacity: 0; transform: translateY(6px); } 10% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
-    #hurt { position: absolute; inset: 0; background: radial-gradient(ellipse at center, #0000 40%, #5b2a9a99 100%); opacity: 0; transition: opacity .15s; }
+    #hurt { position: absolute; inset: 0; background: radial-gradient(ellipse at center, #0000 40%, #7a3cff88 100%); opacity: 0; transition: opacity .15s; }
     #hurt.on { opacity: 1; }
-    #overlay { position: fixed; inset: 0; display: grid; place-items: center; background: #0b0820d9; text-align: center; padding: 24px; pointer-events: auto; }
+    /* overlays */
+    #overlay { position: fixed; inset: 0; display: grid; place-items: center; background: #0e1430e6; text-align: center; padding: 24px; pointer-events: auto; overflow: auto; }
     #overlay.hidden { display: none; }
-    #card { max-width: 560px; }
-    #card h1 { margin: 0 0 4px; font-size: 40px; color: #ffd27a; letter-spacing: 1px; }
-    #card h2 { margin: 0 0 14px; font-size: 18px; font-weight: 400; color: #d6b8ff; }
+    #card { max-width: 600px; }
+    #card h1 { margin: 0 0 4px; font-size: 42px; color: var(--gold); letter-spacing: 1px; }
+    #card h2 { margin: 0 0 14px; font-size: 18px; font-weight: 400; color: var(--drifter); }
     #card p { line-height: 1.55; margin: 8px 0; }
+    #card .quote { font-style: italic; color: var(--lamp-core); border-left: 3px solid var(--gold); padding: 4px 14px; text-align: left; margin: 14px auto; max-width: 480px; }
     #card .keys { display: inline-grid; grid-template-columns: auto auto; gap: 4px 14px; text-align: left; margin: 10px 0; }
-    #card kbd { background: #2a2050; border: 1px solid #ffb34766; border-radius: 6px; padding: 1px 8px; color: #ffd27a; }
-    #card .cta { margin-top: 16px; font-size: 18px; color: #ffd27a; animation: blink 1.4s infinite; }
+    #card .cta { margin-top: 16px; font-size: 18px; color: var(--gold); animation: blink 1.4s infinite; }
     @keyframes blink { 50% { opacity: .45; } }
+    #card .menu { display: grid; gap: 10px; justify-items: center; margin-top: 16px; }
+    button { font: inherit; font-size: 18px; color: var(--sky); background: var(--lamp); border: 0; border-radius: 10px; padding: 10px 28px; min-width: 240px; cursor: pointer; }
+    button:hover { background: var(--lamp-core); } button.alt { background: #1b2350; color: var(--text); border: 1px solid #f2c14e88; }
+    button.alt:hover { background: #26307a; }
+    .row { display: grid; grid-template-columns: 150px 1fr 50px; gap: 12px; align-items: center; text-align: left; margin: 14px auto; max-width: 440px; }
+    input[type=range] { width: 100%; accent-color: var(--lamp); }
+    .big { font-size: 28px; color: var(--gold); font-weight: 700; }
   </style>
 </head>
 <body>
-  <div id="hud">
-    <div class="panel">
-      <div class="row"><span>Ngọn lửa</span><span id="flames"></span></div>
-      <div class="row"><span>Đom đóm</span><b id="carried">0/10</b></div>
-      <div class="bar"><i id="carriedBar"></i></div>
-      <div class="row"><span>Đèn đã thắp</span><span id="lanterns"></span></div>
-      <div class="row"><span>Tỏa sáng <kbd>F</kbd></span><b id="pulse">sẵn sàng</b></div>
+  <div id="hud" class="hidden">
+    <div id="hud-flames" class="box"><div class="label">Ngọn Lửa</div><div id="flames"></div><div id="charmBadge">Bùa Gió <b id="charmT"></b></div></div>
+    <div id="clock" class="box">5:00</div>
+    <div id="hud-tr" class="box"><div class="label">Đèn <b id="lanternCount">0/5</b></div><div id="lanterns"></div><div id="score">0</div><div id="total"></div></div>
+    <div id="windBanner"></div>
+    <div id="moteBar" class="box"></div>
+    <div id="cooldowns">
+      <div id="cdDash" class="cd"><span>Lướt<b>Shift</b></span></div>
+      <div id="cdPulse" class="cd"><span>Tỏa Sáng<b>F</b></span></div>
     </div>
-    <div class="panel right">
-      <div id="time">5:00</div>
-      <div id="score">0 điểm</div>
-    </div>
-    <div id="toasts"></div>
     <div id="prompt"></div>
+    <div id="arrow"></div>
+    <div id="toasts"></div>
     <div id="hurt"></div>
   </div>
   <div id="overlay"><div id="card"></div></div>

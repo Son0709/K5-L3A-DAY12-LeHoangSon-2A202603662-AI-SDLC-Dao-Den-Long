@@ -32,9 +32,13 @@ for (let i = 0; i < 50; i++) {
 const browser = await puppeteer.launch({ executablePath: chrome, headless: true, defaultViewport: { width: 1280, height: 720 }, args: ["--window-size=1280,720"] });
 try {
   const page = await browser.newPage();
-  await page.goto(url + "#play", { waitUntil: "load" });
+  const perNight: Record<string, { average_fps: number; p95_frame_ms: number; worst_frame_ms: number }> = {};
+  let renderer = "unknown";
+  for (const night of [1, 2, 3]) {
+  await page.goto(`${url}#play${night}`, { waitUntil: "load" });
+  await page.reload({ waitUntil: "load" });
   await new Promise((r) => setTimeout(r, 3000)); // warm-up
-  const renderer = await page.evaluate(() => {
+  renderer = await page.evaluate(() => {
     const gl = document.createElement("canvas").getContext("webgl");
     const ext = gl?.getExtension("WEBGL_debug_renderer_info");
     return gl && ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : "unknown";
@@ -50,19 +54,21 @@ try {
     };
     requestAnimationFrame(tick);
   }), SECONDS);
-  const version = await browser.version();
-  const out = {
+  perNight[`night${night}`] = {
     average_fps: Math.round((res.frames / res.ms) * 1000 * 10) / 10,
     p95_frame_ms: Math.round(res.p95 * 10) / 10,
     worst_frame_ms: Math.round(res.worst * 10) / 10,
-    seconds: SECONDS, viewport: "1280x720", browser: version, gl_renderer: renderer,
+  };
+  }
+  const out = {
+    ...perNight, seconds_per_night: SECONDS, viewport: "1280x720", browser: await browser.version(), gl_renderer: renderer,
     cpu: os.cpus()[0]?.model.trim(), cpu_threads: os.cpus().length, ram_gb: Math.round(os.totalmem() / 2 ** 30), os: `${process.platform} ${process.arch}`,
-    scene: "web client as built (Night 1 only, player standing still)", requirement: ">= 30 FPS average",
+    scene: "web client as built, each Night from its start, player standing still", requirement: ">= 30 FPS average",
   };
   mkdirSync("docs/proof/phase-2", { recursive: true });
   writeFileSync("docs/proof/phase-2/fps.json", JSON.stringify(out, null, 2) + "\n");
   console.log(JSON.stringify(out, null, 2));
-  process.exitCode = out.average_fps >= 30 ? 0 : 1;
+  process.exitCode = Object.values(perNight).every((n) => n.average_fps >= 30) ? 0 : 1;
 } finally {
   await browser.close();
   server.kill();

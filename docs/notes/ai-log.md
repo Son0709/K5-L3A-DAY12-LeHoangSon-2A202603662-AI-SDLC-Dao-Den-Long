@@ -66,4 +66,16 @@ M5 (bằng chứng Phase 2): `scripts/proof2.ts` 42 check end-to-end qua CLI th�
 | Chốt chống vòng lặp của hook `Stop` không hoạt động khi thử | Chạy thử 4 trường hợp (xanh, đỏ, đỏ + `stop_hook_active`, khôi phục) | Nguyên nhân: PowerShell 5.1 chèn BOM vào stdin làm `JSON.parse` lỗi; script giờ loại BOM; thử lại đủ 4 trường hợp đều đúng |
 | README còn mô tả luật Phase 1 (cost 8, `fall_enabled` false...) và nói client đủ tính năng | Rà lại tài liệu so với thực tế | Viết lại README theo v1.1 và nói rõ client mới chơi được Đêm 1; bảng truy vết ghi "Chưa đạt" cho phần client |
 
+M4 (client): chuỗi 3 Đêm, menu/giới thiệu Đêm (Ông Đăng)/kết quả/Bình Minh, tạm dừng, cài đặt lưu localStorage, âm thanh tổng hợp, HUD đúng bố cục và bảng màu, mũi tên chỉ đèn, dựng hình Đêm 2 và 3 (cầu, tầng, dốc, tháp, bục), Gió Lạc, Bùa, lá gió. `scripts/screens.ts` điều khiển Chrome thật và chụp ảnh.
+
+| Lỗi (M4) | Phát hiện bằng | Xử lý |
+|---|---|---|
+| Cảnh quá tối (cỏ gần như đen) dù typecheck và build đều sạch | Xem ảnh chụp thật bằng Chrome | Three >= r155 không nhân ánh sáng với π nên hệ số quy đổi 0.15 + 0.55p phải lớn hơn nhiều; tăng hệ số hai lần (4 → 8 → 12) và xem lại ảnh sau mỗi lần |
+| Camera bắt đầu nhìn ngược hướng Mây (đèn đầu tiên ở sau lưng) | Ảnh chụp Đêm 2: không thấy đèn nào | Đặt `camYaw = 180` khi bắt đầu Đêm; công thức đi theo hướng camera giữ nguyên |
+| Cách chụp "màn thua" (đứng yên) không đáng tin: Bóng Mực lang thang tới khi Mây vào tầm 12 m nên không thua | Ảnh chụp cho thấy vẫn đang chơi sau 26 giây | Đổi sang kịch bản thật hơn: đi ra khỏi đảo 3 lần (mỗi lần rơi mất 1 ngọn lửa) |
+| 6 lỗi 404 trong console | Script đếm lỗi trình duyệt, in URL | Là `favicon.ico`; nhúng favicon vào HTML; chạy lại còn 0 lỗi |
+| Có ý định dùng `window.__debug` để ép trạng thái thắng cho ảnh chụp | Cân nhắc | Bỏ: không thêm mã chỉ phục vụ kiểm thử vào sản phẩm; ghi rõ nhánh thắng chưa được chạy tự động |
+
+Chưa kiểm chứng ở client (ghi trong bằng chứng): nhánh thắng/Bình Minh, âm thanh, Gió Lạc và bục nhảy trong cảnh 3D, chơi tay trọn ván.
+
 Test Phase 1 bị luật Ticket-02 thay (lý do, không phải hồi quy): cost 8→10, pickup/interact radius, pulse (cost/radius/cooldown), safe radius, rìa đảo thành rơi, đom đóm mất hẳn→rơi ra vành, điểm nhặt→điểm nạp, lịch sinh Bóng Mực, `game_over` tức thì→cuối tick. Chúng được viết lại ở `tests/v11-*.test.ts` với số chuẩn; `determinism`, `cli`, `contract` được giữ/cập nhật.

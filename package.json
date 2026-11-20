@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "proof": "node scripts/proof2.ts",
     "fps": "node scripts/fps.ts",
+    "screens": "node scripts/screens.ts",
     "proof:phase1": "node scripts/proof.ts"
   },
   "devDependencies": {

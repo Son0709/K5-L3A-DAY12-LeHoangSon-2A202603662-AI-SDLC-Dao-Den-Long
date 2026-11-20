@@ -526,6 +526,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
     shades: shades.map((s) => ({ id: s.id, x: s.x, y: s.y, z: s.z, state: shadeState(s), stunned: s.stun > 0 })),
     motes, charms,
     drifters: drifters.map((d) => ({ id: d.id, x: d.x, y: d.y, z: d.z, state: d.state, stolen: d.stolen })),
+    wind: { active: windActive, dirDeg: windDir, warning: windOn && !windActive && simTick >= WIND_PERIOD - WIND_WARN && (simTick + WIND_WARN) % WIND_PERIOD < WIND_WARN },
   });
 
   return {
