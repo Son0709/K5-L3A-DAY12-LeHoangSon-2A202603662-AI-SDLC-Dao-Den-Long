@@ -3,16 +3,16 @@ import { InputError } from "./errors.ts";
 export type Vec3 = [number, number, number];
 
 export interface ScenarioSpec {
-  player: { pos?: Vec3; carried?: number; flames?: number; invulnTicks?: number; dashCdTicks?: number; pulseCdTicks?: number; charmTicks?: number };
+  player: { pos?: Vec3; carried?: number; flames?: number; invulnTicks?: number; dashCdTicks?: number; pulseCdTicks?: number; charmTicks?: number; successfulLights?: number };
   randomMotes: boolean;
   randomShades: boolean;
   randomDrifters: boolean;
   windEnabled?: boolean;
   motes?: { pos: Vec3; kind?: "random" | "dropped"; ttlS?: number }[];
-  shades?: { id?: string; pos: Vec3; state?: string; stateTicksLeft?: number }[];
+  shades?: { id?: string; pos: Vec3; state?: string; stateTicksLeft?: number; targetLanternId?: string }[];
   drifters?: { id?: string; pos: Vec3; state?: string; stolen?: number }[];
   charms?: { id: string; pos?: Vec3; available?: boolean; respawnS?: number }[];
-  lanterns: { id: string; pos?: Vec3; deposited?: number; lit?: boolean }[];
+  lanterns: { id: string; pos?: Vec3; deposited?: number; lit?: boolean; fuel?: number; everLit?: boolean; relitCount?: number }[];
   timeLeft?: number;
 }
 
@@ -63,7 +63,7 @@ export function parseScenario(raw: unknown): ScenarioSpec {
   if (raw.player !== undefined) {
     const p = item(raw.player, "player");
     if (p.pos !== undefined) sc.player.pos = vec3(p.pos, "player.pos");
-    for (const [k, f] of [["carried", "carried"], ["flames", "flames"], ["invuln_ticks", "invulnTicks"], ["dash_cd_ticks", "dashCdTicks"], ["pulse_cd_ticks", "pulseCdTicks"], ["charm_ticks", "charmTicks"]] as const) {
+    for (const [k, f] of [["carried", "carried"], ["flames", "flames"], ["invuln_ticks", "invulnTicks"], ["dash_cd_ticks", "dashCdTicks"], ["pulse_cd_ticks", "pulseCdTicks"], ["charm_ticks", "charmTicks"], ["successful_lights", "successfulLights"]] as const) {
       if (p[k] !== undefined) sc.player[f] = num(p[k], `player.${k}`);
     }
   }
@@ -93,6 +93,7 @@ export function parseScenario(raw: unknown): ScenarioSpec {
       if (o.id !== undefined) out.id = str(o.id, `shades[${i}].id`);
       if (o.state !== undefined) out.state = str(o.state, `shades[${i}].state`);
       if (o.state_ticks_left !== undefined) out.stateTicksLeft = num(o.state_ticks_left, `shades[${i}].state_ticks_left`);
+      if (o.target_lantern_id !== undefined) out.targetLanternId = str(o.target_lantern_id, `shades[${i}].target_lantern_id`);
       return out;
     });
   }
@@ -123,6 +124,9 @@ export function parseScenario(raw: unknown): ScenarioSpec {
       if (o.pos !== undefined) out.pos = vec3(o.pos, `lanterns[${i}].pos`);
       if (o.deposited !== undefined) out.deposited = num(o.deposited, `lanterns[${i}].deposited`);
       if (o.lit !== undefined) out.lit = bool(o.lit, `lanterns[${i}].lit`);
+      if (o.fuel !== undefined) out.fuel = num(o.fuel, `lanterns[${i}].fuel`);
+      if (o.ever_lit !== undefined) out.everLit = bool(o.ever_lit, `lanterns[${i}].ever_lit`);
+      if (o.relit_count !== undefined) out.relitCount = num(o.relit_count, `lanterns[${i}].relit_count`);
       return out;
     });
   }

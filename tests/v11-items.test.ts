@@ -25,11 +25,12 @@ test("capacity 10: full hands do not pick up", () => {
 });
 
 // ---------------------------------------------------------------- lanterns (cost 10, radius 2.0)
-test("full deposit: deposit then lantern_lit; score 10 per mote deposited + 100 per lantern", () => {
+// v1.2 (Ticket-03): a mote is worth 5 points when deposited (was 10); the score expectations below were updated for that.
+test("full deposit: deposit then lantern_lit; score 5 per mote deposited + 100 for the first light", () => {
   const r = sim({ scenario: scn({ player: { pos: [0, 0, 0], carried: 10 }, lanterns: [L1([0, 0, 1])] }), frames: press(), ticks: 5, every: 1 });
   assert.deepEqual(r.events.map((e) => [e.name, e.tick]), [["deposit", 1], ["lantern_lit", 1]]);
   assert.deepEqual(r.ev("deposit")[0].data, { lantern_id: "L1", amount: 10, deposited: 10 });
-  assert.equal(r.end.score, 10 * 10 + 100);
+  assert.equal(r.end.score, 10 * 5 + 100);
   assert.equal(r.snapAt(5).player.carried, 0);
 });
 
@@ -37,7 +38,7 @@ test("partial deposit keeps progress; top-up deposits only what is missing", () 
   const part = sim({ scenario: scn({ player: { pos: [0, 0, 0], carried: 4 }, lanterns: [L1([0, 0, 1])] }), frames: press(), ticks: 5, every: 1 });
   assert.deepEqual(part.ev("deposit")[0].data, { lantern_id: "L1", amount: 4, deposited: 4 });
   assert.equal(part.ev("lantern_lit").length, 0);
-  assert.equal(part.end.score, 40);
+  assert.equal(part.end.score, 20); // 4 motes x 5 (v1.2)
   assert.equal(part.snapAt(5).lanterns[0].deposited, 4);
   const top = sim({ scenario: scn({ player: { pos: [0, 0, 0], carried: 8 }, lanterns: [L1([0, 0, 1], { deposited: 6 })] }), frames: press(), ticks: 5, every: 1 });
   assert.deepEqual(top.ev("deposit")[0].data, { lantern_id: "L1", amount: 4, deposited: 10 });
@@ -58,7 +59,8 @@ test("one press feeds the nearest unlit lantern; equal distance picks the smalle
   });
   assert.equal(two([1.5, 0, 0], [1, 0, 0]).ev("deposit")[0].data.lantern_id, "L2", "L2 is nearer");
   assert.equal(two([1, 0, 0], [-1, 0, 0]).ev("deposit")[0].data.lantern_id, "L1", "tie goes to the smaller id");
-  assert.equal(two([0.5, 0, 0], [1.5, 0, 0], { lit: true }).ev("deposit")[0].data.lantern_id, "L2", "lit lanterns are skipped");
+  // v1.2 (Ticket-03): a lit lantern that is not full now RECEIVES fuel, so it is no longer skipped; see "interaction picks the nearest
+  // lantern that can receive" in tests/v12-fuel.test.ts.
 });
 
 test("no press, empty hands, or an already lit lantern: no deposit event", () => {

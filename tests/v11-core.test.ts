@@ -10,7 +10,7 @@ test("snapshot tick 0 has the v1.1 shape (default scenario, Night 1)", () => {
   assert.equal(s0.night, 1);
   assert.equal(s0.state, "playing");
   assert.equal(s0.sim_tick, 0);
-  assert.equal(s0.time_left_s, 300);
+  assert.equal(s0.time_left_s, 240); // v1.2 (Ticket-03): Night 1 is 240 s, was 300 s
   assert.equal(s0.score, 0);
   assert.deepEqual(s0.wind, { active: false, dir_deg: 0 });
   assert.deepEqual(s0.player.pos, [0, 0, 0]);
@@ -53,7 +53,7 @@ test("--ticks N runs exactly N steps; snapshots every 10 from 0; sim_tick == tic
 
 test("time_left_s = duration - sim_tick/60; scenario overrides duration", () => {
   const r = sim({ scenario: scn(), ticks: 121, every: 60 });
-  near(r.snapAt(60).time_left_s, 299, 0.001);
+  near(r.snapAt(60).time_left_s, 239, 0.001); // v1.2 (Ticket-03): Night 1 lasts 240 s, was 300 s
   const o = sim({ scenario: scn({ time_left_s: 50 }), ticks: 61, every: 60 });
   assert.equal(o.snapAt(0).time_left_s, 50);
   near(o.snapAt(60).time_left_s, 49, 0.001);
@@ -203,20 +203,10 @@ test("pause freezes sim_tick, time and movement; tick keeps counting; snapshot s
 });
 
 // ---------------------------------------------------------------- win / lose rules and score
-test("last lantern: all_lit wins even on the very last tick; score = 100 + 10x10 + floor(s)x2 + 50x flames", () => {
-  const lit = ["L1", "L2", "L3", "L4"].map((id) => ({ id, lit: true }));
-  const sc = scn({ player: { pos: [0, 0, 0], carried: 10 }, lanterns: [...lit, { id: "L5", pos: [0, 0, 1] }], time_left_s: 100 });
-  const r = sim({ scenario: sc, frames: press(0, "interact"), ticks: 600 });
-  assert.deepEqual(r.events.map((e) => e.name), ["deposit", "lantern_lit", "game_over"]);
-  assert.deepEqual(r.ev("game_over")[0].data, { result: "won", reason: "all_lit" });
-  assert.equal(r.end.ticks, 1);
-  assert.equal(r.end.score, 100 + 100 + 99 * 2 + 3 * 50);
-  const last = sim({ scenario: { ...sc, time_left_s: 1 / 60 }, frames: press(0, "interact"), ticks: 600 });
-  assert.equal(last.end.state, "won", "lit on the final tick still wins");
-  assert.equal(last.end.score, 100 + 100 + 0 + 150);
-});
+// REMOVED in v1.2 (Ticket-03, ADR-0001): "last lantern: all_lit wins ... score with floor(s) x 2". The early win on all_lit and the time
+// bonus no longer exist. The dawn rule is tested in tests/v12-fuel.test.ts.
 
-test("out of time without all lanterns lit: lost/dawn", () => {
+test("out of time without enough lanterns lit: lost/dawn", () => {
   const r = sim({ scenario: scn({ time_left_s: 1 }), ticks: 1000 });
   assert.deepEqual(r.ev("game_over").map((e) => [e.tick, e.data]), [[60, { result: "lost", reason: "dawn" }]]);
   assert.equal(r.end.score, 0);

@@ -13,10 +13,10 @@ test("--night accepts 1, 2, 3 and rejects anything else with InputError (exit 2)
 });
 
 // ================================================================ Night 2: Đảo Cau
-test("Night 2 snapshot: 330 s, 6 lanterns at the standard coordinates, start (0,0,0), charm C1", () => {
+test("Night 2 snapshot: 270 s, 6 lanterns at the standard coordinates, start (0,0,0), charm C1", () => {
   const s0 = sim({ ...N2, ticks: 1 }).snapAt(0);
   assert.equal(s0.night, 2);
-  assert.equal(s0.time_left_s, 330);
+  assert.equal(s0.time_left_s, 270); // v1.2: was 330 s
   assert.deepEqual(s0.lanterns.map((l: { id: string; pos: number[] }) => [l.id, ...l.pos]),
     [["L1", 0, 0, 20], ["L2", 17, 0, -10], ["L3", -17, 0, -10], ["L4", 70, 0, 20], ["L5", 87, 0, -10], ["L6", 53, 0, -10]]);
   assert.deepEqual(s0.player.pos, [0, 0, 0]);
@@ -76,10 +76,10 @@ test("jump pads launch Mây across the gap and land inside the other island", ()
 });
 
 // ================================================================ Night 3: Đảo Chuông
-test("Night 3 snapshot: 360 s, 7 lanterns (with heights), start (0,0,-30), charms C1 and C2", () => {
+test("Night 3 snapshot: 300 s, 7 lanterns (with heights), start (0,0,-30), charms C1 and C2", () => {
   const s0 = sim({ ...N3, ticks: 1 }).snapAt(0);
   assert.equal(s0.night, 3);
-  assert.equal(s0.time_left_s, 360);
+  assert.equal(s0.time_left_s, 300); // v1.2: was 360 s
   assert.deepEqual(s0.lanterns.map((l: { id: string; pos: number[] }) => [l.id, ...l.pos]),
     [["L1", 0, 6, 6], ["L2", 18, 3, 10], ["L3", -18, 3, 10], ["L4", 35, 0, -10], ["L5", -35, 0, -10], ["L6", 20, 0, -35], ["L7", -20, 0, -35]]);
   assert.deepEqual(s0.player.pos, [0, 0, -30]);

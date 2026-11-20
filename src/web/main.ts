@@ -148,7 +148,7 @@ function updateHud(v: ReturnType<typeof sim.view>) {
   $("score").textContent = `${v.score}`;
   $("total").textContent = nightsWonLabel();
 
-  $("moteBar").innerHTML = Array.from({ length: T.carry_capacity }, (_, i) => `<div class="cell${i < p.carried ? " on" : ""}"></div>`).join("") + `<span class="cap">${p.carried}/${T.carry_capacity}</span>`;
+  $("moteBar").innerHTML = Array.from({ length: p.capacity }, (_, i) => `<div class="cell${i < p.carried ? " on" : ""}"></div>`).join("") + `<span class="cap">${p.carried}/${p.capacity}</span>`;
 
   const dashReady = p.dashCooldownLeft <= 0 || p.charmLeft > 0;
   setCd($("cdDash"), dashReady ? 1 : 1 - p.dashCooldownLeft / T.dash_cooldown_s, dashReady, dashReady ? "Shift" : `${p.dashCooldownLeft.toFixed(1)}s`);
@@ -227,7 +227,7 @@ function showMenu() {
       <kbd>← →</kbd><span>xoay camera (hoặc kéo chuột)</span>
       <kbd>Esc</kbd><span>tạm dừng</span>
     </div>
-    <p>Điểm: +${S.per_mote}/đom đóm nạp, +${S.per_lantern}/đèn, +${S.per_stun}/Bóng Mực bị xua. Thắng thêm +${S.per_second_left}/giây còn lại và +${S.per_flame_left}/ngọn lửa còn lại.</p>
+    <p>Giữ cho đảo sáng tới bình minh: đèn hao dầu dần, hãy châm thêm đom đóm. Điểm: +${S.per_mote}/đom đóm nạp, +${S.per_lantern}/lần thắp đầu, +${S.per_relight}/lần thắp lại, +${S.per_stun}/Bóng Mực bị xua. Thắng ở bình minh thêm +${S.per_lantern_dawn} và số dầu mỗi đèn còn sáng, +${S.per_flame_left}/ngọn lửa còn lại.</p>
     <div class="menu">${btn("start", "Bắt đầu")}${btn("settings", "Cài đặt", true)}</div>`);
 }
 

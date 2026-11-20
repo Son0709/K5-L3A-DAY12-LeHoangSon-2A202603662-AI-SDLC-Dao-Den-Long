@@ -46,6 +46,9 @@ export const PUSH_TICKS = 15;
 export const PULSE_CENTER_DY = 0.8;
 export const SHADE_BASE_Y = 1; // default float height of a shade above ground (A15)
 
+// lantern fuel (Ticket-03): fuel is kept as an integer number of 1/60 units, so one tick of burning is exactly 1 unit
+export const DRAIN_RANGE = 2; // a shade this close (XZ) to a weak lantern starts draining it
+
 // drifters (Gió Lạc), ticket Part 3
 export const DRIFT_SPEED = 7;
 export const DRIFT_IDLE_SPEED = 2;
