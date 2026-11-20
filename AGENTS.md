@@ -8,8 +8,14 @@ Game 3D, lõi mô phỏng tất định + chế độ headless theo Test Contrac
 - Kiểm kiểu: `npm run typecheck`
 - Headless: `node src/headless/cli.ts --seed 1 --night 1 --ticks 600 --out out/run.jsonl` (`--night` 1, 2, 3)
 - Chơi bản 3D: `npm run dev` (mở `http://localhost:5173`, thêm `#play` để bỏ qua menu); build tĩnh: `npm run build:web`
-- Kiểm tra ván thắng được: `node scripts/bot.ts 20`
+- Bằng chứng Phase 2: `npm run proof` (chạy CLI thật, sinh `docs/proof/phase-2/`; phải N/N đạt). Chạy sau khi đã commit code để `RESULTS.md` ghi commit sạch.
+- FPS bản 3D: `npm run fps` (cần Chrome, ghi `docs/proof/phase-2/fps.json`; yêu cầu >= 30 FPS ở 1280x720)
+- `node scripts/bot.ts 20`: bot cũ chơi thử Đêm 1 (chỉ tham khảo, chưa chỉnh cho số chuẩn v1.1).
 - `npm run proof:phase1` CHỈ hợp lệ ở tag `phase-1` (v1.0); trên v1.1 nó tự từ chối để không ghi đè bằng chứng Phase 1.
+
+## Harness
+- Skill `.claude/skills/verify/SKILL.md`: quy trình kiểm chứng (typecheck, test, mutation, proof, hiệu năng). Dùng sau mỗi thay đổi luật và trước khi tag.
+- Hook `Stop` (`.claude/settings.json` + `scripts/stop-gate.ts`): chặn kết thúc khi typecheck hoặc test đỏ; có chốt chống vòng lặp `stop_hook_active`.
 
 ## Cấu trúc
 - `src/sim/`: lõi mô phỏng thuần (KHÔNG import three/DOM/Date/Math.random). `sim.ts` luật chơi, `maps.ts` bản đồ chuẩn, `parse.ts` scenario/inputs, `tuning.ts` hằng số.

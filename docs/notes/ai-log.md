@@ -58,4 +58,12 @@ M3 (Gió Lạc, Bùa Gió, `night_start`): 113 test; mutation 16/16.
 | Test so `charm_s` thực với giá trị đã làm tròn 3 chữ số | Test đỏ; đọc giá trị thật 3.333 | Sửa test (sai ở test, code đúng) |
 | Đột biến "vẫn đặt hồi chiêu 90 tick khi có bùa" sống sót | Mutation check | Thêm test bùa hết hiệu lực giữa hai lần lướt; đột biến bị bắt |
 
+M5 (bằng chứng Phase 2): `scripts/proof2.ts` 42 check end-to-end qua CLI thật, đo một Đêm đầy đủ (0.16 đến 0.25 s), `scripts/fps.ts` đo FPS bằng Chrome thật (60.1 FPS, Intel UHD), skill `verify`, hook `Stop` chặn khi test đỏ.
+
+| Lỗi (M5) | Phát hiện bằng | Xử lý |
+|---|---|---|
+| `proof` 42/42 đạt ngay lần đầu | Nghi ngờ, phá 6 hằng số rồi chạy lại proof | 6/6 bị bắt; một chỗ yếu: check bục nhảy Đêm 3 trong proof lỏng hơn unit test (ghi trong README bằng chứng) |
+| Chốt chống vòng lặp của hook `Stop` không hoạt động khi thử | Chạy thử 4 trường hợp (xanh, đỏ, đỏ + `stop_hook_active`, khôi phục) | Nguyên nhân: PowerShell 5.1 chèn BOM vào stdin làm `JSON.parse` lỗi; script giờ loại BOM; thử lại đủ 4 trường hợp đều đúng |
+| README còn mô tả luật Phase 1 (cost 8, `fall_enabled` false...) và nói client đủ tính năng | Rà lại tài liệu so với thực tế | Viết lại README theo v1.1 và nói rõ client mới chơi được Đêm 1; bảng truy vết ghi "Chưa đạt" cho phần client |
+
 Test Phase 1 bị luật Ticket-02 thay (lý do, không phải hồi quy): cost 8→10, pickup/interact radius, pulse (cost/radius/cooldown), safe radius, rìa đảo thành rơi, đom đóm mất hẳn→rơi ra vành, điểm nhặt→điểm nạp, lịch sinh Bóng Mực, `game_over` tức thì→cuối tick. Chúng được viết lại ở `tests/v11-*.test.ts` với số chuẩn; `determinism`, `cli`, `contract` được giữ/cập nhật.
