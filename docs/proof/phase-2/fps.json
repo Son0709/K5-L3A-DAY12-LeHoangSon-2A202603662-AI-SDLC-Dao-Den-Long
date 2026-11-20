@@ -1,8 +1,20 @@
 {
-  "average_fps": 60.1,
-  "p95_frame_ms": 16.8,
-  "worst_frame_ms": 16.9,
-  "seconds": 10,
+  "night1": {
+    "average_fps": 60.1,
+    "p95_frame_ms": 16.8,
+    "worst_frame_ms": 17
+  },
+  "night2": {
+    "average_fps": 60.1,
+    "p95_frame_ms": 16.8,
+    "worst_frame_ms": 17
+  },
+  "night3": {
+    "average_fps": 60,
+    "p95_frame_ms": 16.8,
+    "worst_frame_ms": 17.1
+  },
+  "seconds_per_night": 10,
   "viewport": "1280x720",
   "browser": "Chrome/157.0.8103.80",
   "gl_renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A68) Direct3D11 vs_5_0 ps_5_0, D3D11)",
@@ -10,6 +22,6 @@
   "cpu_threads": 12,
   "ram_gb": 16,
   "os": "win32 x64",
-  "scene": "web client as built (Night 1 only, player standing still)",
+  "scene": "web client as built, each Night from its start, player standing still",
   "requirement": ">= 30 FPS average"
 }

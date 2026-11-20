@@ -3,7 +3,7 @@
 > File này do `npm run proof` sinh ra từ lần chạy thật của CLI headless. Không sửa tay.
 > Giá trị mong đợi nằm trong `scripts/proof2.ts`, tính tay từ `docs/notes/phase2-spec.md` và ticket.
 
-- Code commit khi chạy: `5b29f5d`
+- Code commit khi chạy: `5f72a24`
 - Máy: 11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz, 12 luồng, 16 GB RAM, win32 x64, Node v26.13.1
 - Unit tests: 113/113 đạt (chi tiết: `test-report.txt`)
 - Kiểm tra end-to-end: 42/42 đạt
@@ -50,7 +50,7 @@
 | E1.2 | AC-CONTRACT-1.1 | Night 2: same seed twice => byte-identical (sha256 c0deaae89f61...); other seed differs; 3-decimal rounding | ĐẠT |
 | E1.3 | AC-CONTRACT-1.1 | Night 3: same seed twice => byte-identical (sha256 402e0a37803b...); other seed differs; 3-decimal rounding | ĐẠT |
 | E2 | AC-CONTRACT-1.1 | exit codes: ok 0; --night 4 -> 2; invalid JSON -> 2; non-increasing ticks -> 2 | ĐẠT |
-| F1 | AC-PERF | a full night (21,600 ticks, worst case) runs headless in <= 30 s: N1 0.17 s, N2 0.20 s, N3 0.21 s | ĐẠT |
+| F1 | AC-PERF | a full night (21,600 ticks, worst case) runs headless in <= 30 s: N1 0.15 s, N2 0.17 s, N3 0.22 s | ĐẠT |
 | UT | all | unit test suite: 113/113 pass | ĐẠT |
 
 ## Hiệu năng headless: một Đêm đầy đủ (21.600 tick, trường hợp xấu nhất)
@@ -59,9 +59,9 @@
 
 | Đêm | Thời gian | Kích thước output |
 |---|---:|---:|
-| 1 | 0.17 s | 3.0 MB |
-| 2 | 0.20 s | 3.5 MB |
-| 3 | 0.21 s | 4.2 MB |
+| 1 | 0.15 s | 3.0 MB |
+| 2 | 0.17 s | 3.5 MB |
+| 3 | 0.22 s | 4.2 MB |
 
 ## Lệnh tái lập từng lần chạy
 
