@@ -1,6 +1,6 @@
 # Đảo Đèn Lồng
 
-> **Video demo:** (sẽ được đính kèm GitHub Release `v1.0.0`, link cập nhật ở đây khi có)
+> **Video demo (4 phút 20 giây):** [demo.mp4 trong Release v1.0.0](https://github.com/Son0709/K5-L3A-DAY12-LeHoangSon-2A202603662-AI-SDLC-Dao-Den-Long/releases/download/v1.0.0/demo.mp4) (tệp 269 MB, tải về để xem) · [trang Release](https://github.com/Son0709/K5-L3A-DAY12-LeHoangSon-2A202603662-AI-SDLC-Dao-Den-Long/releases/tag/v1.0.0)
 
 Game 3D góc nhìn thứ ba. Mây, người giữ đèn nhỏ tuổi (đội nón lá có treo đèn lồng nhỏ, quàng khăn đỏ), gom đom đóm để giữ sáng các Đèn Lồng Lớn và né Bóng Mực trong sương đen, qua ba đêm: **Đảo Bến**, **Đảo Cau**, **Đảo Chuông**. Đèn hao dầu dần, Bóng Mực hút dầu, và mục tiêu là giữ đảo sáng tới bình minh.
 
