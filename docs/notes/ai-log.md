@@ -2,6 +2,23 @@
 
 Công cụ: Claude Code (VS Code), model Sonnet 5.5.
 
+## Token và chi phí (đã đo)
+
+Nguồn: nhật ký phiên local của Claude Code (`.claude/projects/.../*.jsonl`), cộng `usage` của từng lượt trả lời (giữ giá trị cuối của mỗi tin nhắn). Chia theo phase bằng thời điểm commit của từng tag. Một phiên duy nhất cho cả 4 phase, model `claude-sonnet-5-5`.
+
+| Phase | Lượt trả lời | Token đầu ra | Ghi bộ nhớ đệm | Đọc bộ nhớ đệm |
+|---|---:|---:|---:|---:|
+| 1 | 71 | 149.412 | 189.182 | 10.774.382 |
+| 2 | 68 | 287.949 | 314.410 | 27.822.340 |
+| 3 | 31 | 107.247 | 131.153 | 19.795.267 |
+| 4 (tới tag) | 62 | 166.965 | 951.088 | 48.962.376 |
+| Sau tag `phase-4` | 11 | 16.314 | 15.079 | 10.144.401 |
+| **Tổng** | **243** | **727.887** | **1.600.912** | **117.498.766** |
+
+(Bảng này tính lại khi viết retro nên hơn tổng trước đó vài lượt cuối; token đầu vào mới chỉ vài trăm vì gần như toàn bộ đầu vào đi qua bộ nhớ đệm.)
+
+**Giới hạn:** số trong nhật ký có thể lệch nhẹ so với số thanh toán; không tính được số tiền vì không có bảng giá chắc chắn cho model này và bạn có thể dùng gói thuê bao. Lấy số tiền (nếu có) từ `/cost`. Các cột "chưa ghi" trong bảng từng phase bên dưới là bản nháp cũ không còn dùng; số liệu chính thức là bảng này. Retro: [retro.md](retro.md).
+
 ## Phase 1
 
 | Bước | Việc | Token/chi phí ước tính |

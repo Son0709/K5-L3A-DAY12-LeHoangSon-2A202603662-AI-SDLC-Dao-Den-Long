@@ -98,6 +98,6 @@ Bằng chứng ngắn rằng phần cũ vẫn đúng: toàn bộ unit test và `
 - Quyết định thiết kế: [ADR-0001](docs/notes/adr-0001-lantern-fuel.md); thay đổi phá vỡ tương thích: [CHANGELOG.md](CHANGELOG.md)
 - Spec và giả định: [Phase 2](docs/notes/phase2-spec.md), [Phase 1](docs/notes/assumptions.md)
 - Bằng chứng từng phase: [phase-1](docs/proof/phase-1/README.md), [phase-2](docs/proof/phase-2/README.md), [phase-3](docs/proof/phase-3/README.md), [phase-4](docs/proof/phase-4/README.md)
-- Nhật ký dùng AI và retro: [docs/notes/ai-log.md](docs/notes/ai-log.md)
+- Nhật ký dùng AI (kèm token): [docs/notes/ai-log.md](docs/notes/ai-log.md); retro: [docs/notes/retro.md](docs/notes/retro.md)
 - Quy ước cho agent (harness): [AGENTS.md](AGENTS.md), skill `.claude/skills/verify`, hook `Stop`
 - Nguồn và giấy phép: [CREDITS.md](CREDITS.md), [LICENSE](LICENSE) (MIT)
