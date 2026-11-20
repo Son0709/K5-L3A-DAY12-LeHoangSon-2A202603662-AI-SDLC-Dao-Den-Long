@@ -7,7 +7,9 @@ Game 3D, lõi mô phỏng tất định + chế độ headless theo Test Contrac
 - Test: `npm test` (node:test, không cần build)
 - Kiểm kiểu: `npm run typecheck`
 - Headless: `node src/headless/cli.ts --seed 1 --night 1 --ticks 600 --out out/run.jsonl` (`--night` 1, 2, 3)
-- Chơi bản 3D: `npm run dev` (mở `http://localhost:5173`, thêm `#play` để bỏ qua menu); build tĩnh: `npm run build:web`
+- Chơi: `npm start` (= `run_cmd`: build lần đầu, phục vụ game + bảng xếp hạng lưu đĩa tại `data/leaderboard.json`, mở trình duyệt). `npm run dev` cho phát triển (`#play` bỏ qua menu); build tĩnh: `npm run build:web`
+- Xuất bảng xếp hạng: `node scripts/run.ts --export-leaderboard out.json` (`{"entries": [...]}`)
+- Benchmark: `npm run bench` (`bench_cmd`, cần Chrome; ghi `bench.json`); soak: `npm run soak` (`soak_cmd`, ghi `soak.json`); kiểm tra bảng xếp hạng bằng trình duyệt thật: `npm run e2e:leaderboard`
 - Bằng chứng Phase 3: `npm run proof` (chạy CLI thật, sinh `docs/proof/phase-3/`; phải N/N đạt). Chạy sau khi đã commit code để `RESULTS.md` ghi commit sạch.
 - Ảnh chụp và kiểm tra tự động client bằng Chrome thật: `npm run screens` (ghi `docs/proof/phase-2/screens/`)
 - FPS bản 3D: `npm run fps` (cần Chrome, ghi `docs/proof/phase-2/fps.json`; yêu cầu >= 30 FPS ở 1280x720)
@@ -22,6 +24,8 @@ Game 3D, lõi mô phỏng tất định + chế độ headless theo Test Contrac
 - `src/sim/`: lõi mô phỏng thuần (KHÔNG import three/DOM/Date/Math.random). `sim.ts` luật chơi, `maps.ts` bản đồ chuẩn, `parse.ts` scenario/inputs, `tuning.ts` hằng số.
 - `src/headless/`: CLI theo Test Contract.
 - `src/web/`: client (Three.js + Vite), chỉ đọc `sim.view()`; KHÔNG chứa luật chơi. Web và headless dùng chung `createSim`. `main.ts` luồng game/HUD/input, `scene.ts` dựng cảnh theo bản đồ và bảng màu, `audio.ts` âm thanh tổng hợp (Web Audio, không asset), `settings.ts` lưu cài đặt.
+- Client: KHÔNG ghi DOM mỗi khung hình. HUD chỉ được chạm DOM khi giá trị đổi (xem `setHtml/setText/setShow/setClass` trong `main.ts`); ghi `innerHTML` mỗi khung hình đã làm bench tụt từ 105 xuống 75 FPS với 30 ms giật. Bầy đông (Bóng Mực, đom đóm) phải dựng instanced.
+- `src/leaderboard.ts` là logic thuần dùng chung cho máy chủ (`server/`) và trình duyệt; mọi quy tắc xếp hạng sửa ở đó và có test.
 - Thay đổi client phải kiểm chứng bằng `npm run screens` (xem ảnh thật) chứ không chỉ typecheck: lần đầu cảnh quá tối và camera nhìn ngược hướng mà typecheck không thấy.
 - `tests/`: `v11-*.test.ts` (luật v1.1), `determinism`, `cli`, `contract`; `docs/proof/`: bằng chứng theo phase.
 

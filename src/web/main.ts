@@ -8,6 +8,8 @@ import { DT, T } from "../sim/tuning.ts";
 import { createWorld } from "./scene.ts";
 import * as audio from "./audio.ts";
 import { loadSettings, saveSettings } from "./settings.ts";
+import { cleanName, isoWithOffset, type Entry } from "../leaderboard.ts";
+import { fetchEntries, submitEntry } from "./leaderboard-client.ts";
 
 const $ = <E extends HTMLElement>(id: string) => document.getElementById(id) as E;
 const world = createWorld(document.body);
@@ -24,6 +26,8 @@ const REASONS: Record<string, string> = { dawn: "Trời sáng mất rồi, sươ
 let phase: Phase = "menu";
 let night = 1;
 let totalScore = 0;
+let nightsWon = 0; // nights won in the current run (for the leaderboard)
+let lastSeed = 0; // seed of the night being played (stored with a leaderboard entry)
 let nightScore = 0;
 let lastReason = "";
 let settingsFrom: "menu" | "paused" = "menu";
@@ -42,6 +46,15 @@ const GAME_KEYS = new Set(["Space", "ArrowLeft", "ArrowRight", "ArrowUp", "Arrow
 
 window.addEventListener("keydown", (e) => {
   audio.unlock();
+  // typing in a form field must not trigger game keys (R, E, Space...)
+  const field = e.target as HTMLElement | null;
+  if (field && field.tagName === "INPUT") {
+    if ((field as HTMLInputElement).type === "text") {
+      if (e.code === "Enter") { e.preventDefault(); void submitScore(); }
+      else if (e.code === "Escape") act("skipscore");
+    }
+    return;
+  }
   if (GAME_KEYS.has(e.code)) e.preventDefault();
   if (e.repeat) return;
   held.add(e.code);
@@ -235,7 +248,7 @@ function showMenu() {
       <kbd>Esc</kbd><span>tạm dừng</span>
     </div>
     <p>Giữ cho đảo sáng tới bình minh: đèn hao dầu dần, hãy châm thêm đom đóm. Điểm: +${S.per_mote}/đom đóm nạp, +${S.per_lantern}/lần thắp đầu, +${S.per_relight}/lần thắp lại, +${S.per_stun}/Bóng Mực bị xua. Thắng ở bình minh thêm +${S.per_lantern_dawn} và số dầu mỗi đèn còn sáng, +${S.per_flame_left}/ngọn lửa còn lại.</p>
-    <div class="menu">${btn("start", "Bắt đầu")}${btn("settings", "Cài đặt", true)}</div>`);
+    <div class="menu">${btn("start", "Bắt đầu")}${btn("lb", "Bảng xếp hạng", true)}${btn("settings", "Cài đặt", true)}</div>`);
 }
 
 function showIntro(n: number) {
@@ -285,6 +298,7 @@ function showResult() {
   const lit = v.lanterns.filter((l) => l.lit).length;
   if (won) {
     totalScore += v.score;
+    nightsWon++;
     if (night < 3) {
       showCard(`<h1>Đêm ${night} hoàn thành!</h1><h2>${NIGHTS[night - 1].name} đã sáng rực.</h2>
         <p>Điểm đêm này: <span class="big">${v.score}</span></p><p>Tổng điểm: <b>${totalScore}</b> · Ngọn lửa còn lại ${v.player.flames} · Thời gian còn ${fmtTime(v.timeLeft)}</p>
@@ -297,7 +311,7 @@ function showResult() {
   } else {
     showCard(`<h1>Đêm chưa kết thúc…</h1><h2>${REASONS[lastReason] ?? "Mây đã thua đêm nay."}</h2>
       <p>Đèn đã thắp ${lit}/${v.lanterns.length} · Điểm ${v.score}</p>
-      <div class="menu">${btn("retry", `Chơi lại Đêm ${night}`)}${btn("menu", "Về menu", true)}</div>`);
+      <div class="menu">${btn("retry", `Chơi lại Đêm ${night}`)}${btn("savescore", "Lưu điểm", true)}${btn("menu", "Về menu", true)}</div>`);
   }
 }
 
@@ -306,7 +320,7 @@ function showDawn() {
   $("hud").classList.add("hidden");
   showCard(`<h1>Bình Minh</h1><h2>Ba hòn đảo đã sáng đèn. Biển mây ấm lên trong ánh vàng.</h2>
     <p>Tổng điểm</p><p><span class="big" style="font-size:48px">${totalScore}</span></p>
-    <div class="menu">${btn("menu", "Về menu")}</div>`);
+    <div class="menu">${btn("savescore", "Lưu điểm")}${btn("menu", "Về menu", true)}</div>`);
   audio.sfx("win");
 }
 
@@ -314,6 +328,7 @@ function showDawn() {
 function prepareNight(n: number) {
   night = n;
   const seed = (Date.now() ^ Math.floor(Math.random() * 2 ** 32)) >>> 0; // seed chosen here; the sim itself stays pure
+  lastSeed = seed;
   lastReason = "";
   sim = createSim(parseScenario(undefined), seed, n, onEvent);
   k = 0;
@@ -325,7 +340,51 @@ function prepareNight(n: number) {
   camYaw = 180; // camera behind Mây, who starts facing +Z (towards the first lantern)
 }
 function beginNight(n: number) { prepareNight(n); phase = "playing"; $("hud").classList.remove("hidden"); hideCard(); }
-function newGame() { totalScore = 0; prepareNight(1); showIntro(1); }
+function newGame() { totalScore = 0; nightsWon = 0; prepareNight(1); showIntro(1); }
+
+// ---------------------------------------------------------------- leaderboard screens
+const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const fmtDate = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? iso : d.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" }); };
+
+async function showLeaderboard(highlightRank: number | null = null, backTo: "menu" = "menu") {
+  showCard(`<h1>Bảng xếp hạng</h1><h2>Đang tải…</h2>`);
+  const { entries, where } = await fetchEntries();
+  const rows = entries.length
+    ? entries.map((e: Entry, i: number) => `<tr${highlightRank === i + 1 ? ' class="me"' : ""}><td>${i + 1}</td><td>${esc(e.name)}</td><td>${e.score}</td><td>${e.nights_won}/3</td><td>${esc(fmtDate(e.achieved_at))}</td></tr>`).join("")
+    : `<tr><td colspan="5" style="opacity:.7">Chưa có điểm nào. Hãy chơi và lưu điểm của bạn!</td></tr>`;
+  showCard(`
+    <h1>Bảng xếp hạng</h1>
+    <h2>Top 10 · ${where === "disk" ? "lưu trên đĩa (data/leaderboard.json)" : "lưu trong trình duyệt (không có máy chủ cục bộ)"}</h2>
+    <table class="lb"><thead><tr><th>#</th><th>Tên</th><th>Điểm</th><th>Đêm thắng</th><th>Lúc đạt</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="menu">${btn(backTo, "Về menu")}</div>`);
+}
+
+function showSaveForm(error = "") {
+  const last = (() => { try { return localStorage.getItem("ddl.lastName") ?? ""; } catch { return ""; } })();
+  showCard(`
+    <h1>Lưu điểm</h1>
+    <h2>Tổng điểm <b style="color:var(--gold)">${totalScore}</b> · ${nightsWon}/3 Đêm đã thắng</h2>
+    <p>Nhập tên của bạn (3 đến 12 ký tự: chữ, số hoặc gạch dưới)</p>
+    <input id="nameInput" type="text" maxlength="24" autocomplete="off" spellcheck="false" value="${esc(last)}" aria-label="Tên">
+    <div id="nameErr" class="err" role="alert">${esc(error)}</div>
+    <div class="menu">${btn("submitscore", "Lưu điểm")}${btn("skipscore", "Bỏ qua", true)}</div>`);
+  const input = $<HTMLInputElement>("nameInput");
+  input.focus();
+  input.select();
+}
+
+async function submitScore() {
+  const input = $<HTMLInputElement>("nameInput");
+  const name = cleanName(input.value.trim());
+  if (name === null) { $("nameErr").textContent = "Tên phải có 3 đến 12 ký tự: chữ, số hoặc gạch dưới (không dấu cách)."; return; }
+  try { localStorage.setItem("ddl.lastName", name); } catch { /* ignore */ }
+  const entry: Entry = { name, score: totalScore, nights_won: nightsWon, achieved_at: isoWithOffset(), seed: lastSeed };
+  const res = await submitEntry(entry);
+  prepareNight(1);
+  phase = "menu";
+  $("hud").classList.add("hidden");
+  await showLeaderboard(res.rank);
+}
 
 function togglePause() {
   if (phase === "playing") showPause();
@@ -349,6 +408,10 @@ function act(a: string | undefined) {
     case "next": prepareNight(night + 1); showIntro(night); break;
     case "dawn": showDawn(); break;
     case "menu": prepareNight(1); showMenu(); break;
+    case "lb": void showLeaderboard(); break;
+    case "savescore": showSaveForm(); break;
+    case "submitscore": void submitScore(); break;
+    case "skipscore": if (phase === "result") showResult(); else act("menu"); break; // the lose card adds no score, so showing it again is safe
   }
 }
 $("card").addEventListener("click", (e) => act((e.target as HTMLElement).closest<HTMLElement>("[data-act]")?.dataset.act));

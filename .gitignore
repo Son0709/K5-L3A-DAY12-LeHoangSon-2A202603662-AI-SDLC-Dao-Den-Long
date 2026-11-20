@@ -5,3 +5,6 @@ dist/
 *.log
 out/
 .claude/settings.local.json
+
+# local leaderboard data (created at run time)
+data/

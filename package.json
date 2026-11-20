@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Dao Den Long - 3D lantern game with deterministic headless mode",
   "scripts": {
+    "start": "node scripts/run.ts",
     "dev": "vite",
     "build:web": "vite build",
     "preview": "vite preview",
@@ -18,6 +19,7 @@
     "proof:phase2": "node scripts/proof2.ts",
     "fps": "node scripts/fps.ts",
     "screens": "node scripts/screens.ts",
+    "e2e:leaderboard": "node scripts/e2e-leaderboard.ts",
     "proof:phase1": "node scripts/proof.ts"
   },
   "devDependencies": {

@@ -76,6 +76,13 @@
     button.alt:hover { background: #26307a; }
     .row { display: grid; grid-template-columns: 150px 1fr 50px; gap: 12px; align-items: center; text-align: left; margin: 14px auto; max-width: 440px; }
     input[type=range] { width: 100%; accent-color: var(--lamp); }
+    input[type=text] { font: inherit; font-size: 20px; color: var(--text); background: #1b2350; border: 2px solid #f2c14e88; border-radius: 10px; padding: 8px 14px; width: 280px; text-align: center; }
+    input[type=text]:focus { outline: none; border-color: var(--lamp-core); box-shadow: 0 0 10px #ffb34788; }
+    .err { color: var(--danger); min-height: 1.5em; margin: 6px 0; font-size: 16px; }
+    table.lb { border-collapse: collapse; margin: 12px auto; min-width: 520px; text-align: left; }
+    table.lb th { color: var(--drifter); font-weight: 400; border-bottom: 1px solid #f2c14e55; }
+    table.lb th, table.lb td { padding: 6px 12px; }
+    table.lb tr.me td { background: #ffb34733; color: var(--lamp-core); }
     .big { font-size: 28px; color: var(--gold); font-weight: 700; }
   </style>
 </head>

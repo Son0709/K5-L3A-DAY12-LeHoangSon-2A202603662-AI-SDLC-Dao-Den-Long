@@ -78,6 +78,18 @@ M4 (client): chuỗi 3 Đêm, menu/giới thiệu Đêm (Ông Đăng)/kết qu�
 
 Chưa kiểm chứng ở client (ghi trong bằng chứng): nhánh thắng/Bình Minh, âm thanh, Gió Lạc và bục nhảy trong cảnh 3D, chơi tay trọn ván.
 
+## Phase 4 (Ticket-04, Contract v1.3: phát hành)
+
+Bước 1 (bench, soak, v1.3) và bước 2 (bảng xếp hạng): xem bảng lỗi dưới. Mutation check bảng xếp hạng 10/11 (1 đột biến tương đương: ghi file nguyên tử).
+
+| Lỗi (Phase 4) | Phát hiện bằng | Xử lý |
+|---|---|---|
+| Đoán nút thắt hiệu năng là 200 Bóng Mực (1.000 draw call) | Đo thay vì đoán: tách từng nguyên nhân bằng cờ thử nghiệm | Bóng Mực chỉ góp ~9 FPS; nút thắt thật là HUD ghi DOM mỗi khung hình. Chỉ cập nhật DOM khi đổi: 75,7 lên 105 FPS, p1_low 22,6 lên 35. Vẫn chuyển sang dựng instanced vì rẻ và đúng |
+| Nghi ngờ phép lấy mẫu bộ nhớ (PowerShell) làm giật | Chạy `--no-mem` so sánh | Không phải nguyên nhân; giữ lấy mẫu |
+| Lệnh bench chập chờn: treo, 1 khung hình sau 63 s, tải 28 s | Lặp lại 10+ lần, in lỗi trang, đọc `power_source` | Laptop chạy pin (giảm xung) và cửa sổ bị che làm Chrome dừng khung hình. Thêm theo dõi tiến độ, đưa cửa sổ lên trước, tự chạy lại headless nếu lỗi, ghi `power_source`. Vẫn còn dao động trên GPU tích hợp; ghi trung thực |
+| `bench.json` đầu tiên báo `vsync_off: false` dù không bị khóa 60 | Đối chiếu probe (57 fps) với avg 75,8 | Phép thăm dò trang trống không đáng tin; dùng thêm `min_frame_ms` (< 5 ms thì không thể bị vsync) |
+| Gọi `showResult(true)` trong khi hàm không nhận tham số; phím game (R, E, Space) có thể kích hoạt khi gõ tên | Tự rà mã trước khi chạy | Sửa; chặn phím game khi tiêu điểm ở ô nhập; e2e xác nhận gõ "Rex Ro" không kích hoạt gì |
+
 ## Phase 3 (Ticket-03, Contract v1.2: đèn cạn dầu)
 
 Quy trình: đọc ticket, liệt kê luật bị thay và giả định, viết ADR + CHANGELOG, viết test v1.2 trước, rồi sửa lõi. Mutation check 22/22.
