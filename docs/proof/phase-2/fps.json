@@ -1,0 +1,15 @@
+{
+  "average_fps": 60.1,
+  "p95_frame_ms": 16.8,
+  "worst_frame_ms": 16.9,
+  "seconds": 10,
+  "viewport": "1280x720",
+  "browser": "Chrome/157.0.8103.80",
+  "gl_renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x00009A68) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "cpu": "11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz",
+  "cpu_threads": 12,
+  "ram_gb": 16,
+  "os": "win32 x64",
+  "scene": "web client as built (Night 1 only, player standing still)",
+  "requirement": ">= 30 FPS average"
+}
