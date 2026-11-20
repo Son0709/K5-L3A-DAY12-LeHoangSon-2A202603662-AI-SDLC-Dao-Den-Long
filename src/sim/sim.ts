@@ -20,9 +20,11 @@ const dist = (ax: number, az: number, bx: number, bz: number) => Math.hypot(ax -
 const within = (d: number, r: number) => d <= r + EPS;
 const sec = (s: number) => Math.round(s * 60);
 
-export function simulate(sc: ScenarioSpec, frames: Frame[], seed: number, ticks: number, every: number): OutLine[] {
+export interface InputState { mx: number; mz: number; yaw: number; jump: boolean; interact: boolean; pulse: boolean }
+
+/** Stateful game. Shared by the headless runner (`simulate`) and the 3D client, so both use the same rules. */
+export function createSim(sc: ScenarioSpec, seed: number, onEvent: (e: OutLine) => void) {
   const rng = mulberry32(seed);
-  const lines: OutLine[] = [];
 
   const player = {
     x: sc.player.pos?.[0] ?? 0, y: sc.player.pos?.[1] ?? 0, z: sc.player.pos?.[2] ?? 0,
@@ -97,7 +99,7 @@ export function simulate(sc: ScenarioSpec, frames: Frame[], seed: number, ticks:
 
   // ---- helpers
   const emit = (tick: number, name: string, data: Record<string, unknown>) =>
-    lines.push({ type: "event", tick, name, data });
+    onEvent({ type: "event", tick, name, data });
 
   const clampIsland = (o: { x: number; z: number }) => {
     const d = Math.hypot(o.x, o.z);
@@ -124,43 +126,32 @@ export function simulate(sc: ScenarioSpec, frames: Frame[], seed: number, ticks:
     emit(tick, "game_over", { result, reason });
   };
 
-  const snapshot = (tick: number) => {
-    lines.push({
+  const snapshot = (tick: number): OutLine => {
+    return {
       type: "snapshot", tick, sim_tick: steps, state, time_left_s: r3(timeLeft()), score,
       player: { pos: [r3(player.x), r3(player.y), r3(player.z)], flames: player.flames, carried: player.carried },
       lanterns: lanterns.map((l) => ({ id: l.id, pos: [r3(l.x), r3(l.y), r3(l.z)], lit: l.lit, deposited: l.deposited })),
       shades: shades.map((s) => ({ id: s.id, pos: [r3(s.x), SHADE_Y, r3(s.z)], state: s.stunned ? "stunned" : "chase" })),
       motes_active: motes.length,
       motes: motes.map((m) => ({ id: m.id, pos: [r3(m.x), 0, r3(m.z)] })),
-    });
+    };
   };
 
-  // ---- main loop
-  const cur = { mx: 0, mz: 0, yaw: 0, jump: false, interact: false, pulse: false };
+  // ---- one step: reads the input of tick k, produces state k+1 and events stamped k+1
   let prev = { jump: false, interact: false, pulse: false };
-  let fi = 0;
-  snapshot(0);
 
-  for (let k = 0; k < ticks && state === "playing"; k++) {
+  const advance = (k: number, input: InputState): void => {
     const tick = k + 1;
-    while (fi < frames.length && frames[fi].tick <= k) {
-      const f = frames[fi++];
-      if (f.move) [cur.mx, cur.mz] = f.move;
-      if (f.cam_yaw_deg !== undefined) cur.yaw = f.cam_yaw_deg;
-      if (f.jump !== undefined) cur.jump = f.jump;
-      if (f.interact !== undefined) cur.interact = f.interact;
-      if (f.pulse !== undefined) cur.pulse = f.pulse;
-    }
-    const jumpEdge = cur.jump && !prev.jump;
-    const interactEdge = cur.interact && !prev.interact;
-    const pulseEdge = cur.pulse && !prev.pulse;
-    prev = { jump: cur.jump, interact: cur.interact, pulse: cur.pulse };
+    const jumpEdge = input.jump && !prev.jump;
+    const interactEdge = input.interact && !prev.interact;
+    const pulseEdge = input.pulse && !prev.pulse;
+    prev = { jump: input.jump, interact: input.interact, pulse: input.pulse };
 
     // 1. player movement + jump
     {
-      const th = (cur.yaw * Math.PI) / 180;
-      let dx = cur.mx * Math.cos(th) + cur.mz * Math.sin(th);
-      let dz = -cur.mx * Math.sin(th) + cur.mz * Math.cos(th);
+      const th = (input.yaw * Math.PI) / 180;
+      let dx = input.mx * Math.cos(th) + input.mz * Math.sin(th);
+      let dz = -input.mx * Math.sin(th) + input.mz * Math.cos(th);
       const len = Math.hypot(dx, dz);
       if (len > 1) { dx /= len; dz /= len; }
       player.x += dx * T.player_speed * DT;
@@ -206,7 +197,7 @@ export function simulate(sc: ScenarioSpec, frames: Frame[], seed: number, ticks:
         }
       }
     }
-    if (lanterns.every((l) => l.lit)) { steps = tick; finish("won", "all_lit", tick); break; }
+    if (lanterns.every((l) => l.lit)) { steps = tick; finish("won", "all_lit", tick); return; }
 
     // 4. pulse
     if (pulseEdge && k >= player.pulseReadyAt && player.carried >= T.pulse_cost) {
@@ -254,7 +245,7 @@ export function simulate(sc: ScenarioSpec, frames: Frame[], seed: number, ticks:
         if (player.flames <= 0) { steps = tick; finish("lost", "no_flames", tick); }
         break;
       }
-      if (state !== "playing") break;
+      if (state !== "playing") return;
     }
 
     // 7. spawn
@@ -267,10 +258,53 @@ export function simulate(sc: ScenarioSpec, frames: Frame[], seed: number, ticks:
 
     // 8. time
     steps = tick;
-    if (timeLeft() <= EPS) { finish("lost", "dawn", tick); break; }
-    if (tick % every === 0) snapshot(tick);
-  }
+    if (timeLeft() <= EPS) finish("lost", "dawn", tick);
+  };
 
-  lines.push({ type: "end", ticks: steps, state, score });
+  /** Live (unrounded) state for rendering and HUD. Read-only by convention. */
+  const view = () => ({
+    state, score, steps,
+    timeLeft: Math.max(0, timeLeft()),
+    player: {
+      x: player.x, y: player.y, z: player.z, flames: player.flames, carried: player.carried,
+      invulnLeft: Math.max(0, player.invulnUntil - steps) / 60,
+      pulseCooldownLeft: Math.max(0, player.pulseReadyAt - steps) / 60,
+    },
+    lanterns, shades, motes,
+  });
+
+  return {
+    step: advance,
+    snapshot,
+    view,
+    isPlaying: () => state === "playing",
+    steps: () => steps,
+    result: () => ({ state, score }),
+  };
+}
+
+/** Batch runner used by the headless CLI: replays input frames and returns JSONL lines. */
+export function simulate(sc: ScenarioSpec, frames: Frame[], seed: number, ticks: number, every: number): OutLine[] {
+  const lines: OutLine[] = [];
+  const sim = createSim(sc, seed, (e) => lines.push(e));
+  lines.push(sim.snapshot(0));
+
+  const cur: InputState = { mx: 0, mz: 0, yaw: 0, jump: false, interact: false, pulse: false };
+  let fi = 0;
+  for (let k = 0; k < ticks && sim.isPlaying(); k++) {
+    while (fi < frames.length && frames[fi].tick <= k) {
+      const f = frames[fi++];
+      if (f.move) [cur.mx, cur.mz] = f.move;
+      if (f.cam_yaw_deg !== undefined) cur.yaw = f.cam_yaw_deg;
+      if (f.jump !== undefined) cur.jump = f.jump;
+      if (f.interact !== undefined) cur.interact = f.interact;
+      if (f.pulse !== undefined) cur.pulse = f.pulse;
+    }
+    sim.step(k, cur);
+    if (!sim.isPlaying()) break;
+    if ((k + 1) % every === 0) lines.push(sim.snapshot(k + 1));
+  }
+  const r = sim.result();
+  lines.push({ type: "end", ticks: sim.steps(), state: r.state, score: r.score });
   return lines;
 }
