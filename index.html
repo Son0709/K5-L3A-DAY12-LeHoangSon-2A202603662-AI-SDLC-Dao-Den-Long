@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Đảo Đèn Lồng</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0820; font-family: "Segoe UI", system-ui, sans-serif; color: #ffe9c4; }
+    canvas { display: block; }
+    #hud { position: fixed; inset: 0; pointer-events: none; text-shadow: 0 1px 4px #000a; }
+    .panel { position: absolute; top: 14px; left: 14px; display: grid; gap: 6px; padding: 10px 14px; background: #1a1233aa; border: 1px solid #ffb34744; border-radius: 12px; min-width: 210px; }
+    .panel.right { left: auto; right: 14px; text-align: right; min-width: 150px; }
+    .row { display: flex; justify-content: space-between; gap: 14px; font-size: 15px; }
+    .row b { color: #ffd27a; font-weight: 600; }
+    .flame { color: #ff9d3c; } .flame.off { color: #4b3d66; }
+    .dot { display: inline-block; width: 11px; height: 11px; margin-left: 4px; border-radius: 50%; background: #3a2e55; border: 1px solid #ffb34766; }
+    .dot.on { background: #ffb347; box-shadow: 0 0 8px #ffb347; }
+    .bar { height: 6px; background: #3a2e55; border-radius: 3px; overflow: hidden; }
+    .bar > i { display: block; height: 100%; background: linear-gradient(90deg, #ffd27a, #ff9d3c); width: 0; }
+    #time { font-size: 26px; font-weight: 700; color: #ffd27a; }
+    #score { font-size: 18px; }
+    #prompt { position: absolute; bottom: 14%; left: 50%; transform: translateX(-50%); font-size: 18px; padding: 8px 16px; background: #1a1233cc; border: 1px solid #ffb34766; border-radius: 10px; display: none; }
+    #toasts { position: absolute; top: 90px; left: 50%; transform: translateX(-50%); display: grid; gap: 6px; justify-items: center; }
+    .toast { padding: 6px 14px; background: #1a1233cc; border-radius: 10px; font-size: 16px; animation: fade 2.4s forwards; }
+    .toast.good { color: #ffd27a; border: 1px solid #ffb347aa; } .toast.bad { color: #d6b8ff; border: 1px solid #8a5bd6aa; }
+    @keyframes fade { 0% { opacity: 0; transform: translateY(6px); } 10% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+    #hurt { position: absolute; inset: 0; background: radial-gradient(ellipse at center, #0000 40%, #5b2a9a99 100%); opacity: 0; transition: opacity .15s; }
+    #hurt.on { opacity: 1; }
+    #overlay { position: fixed; inset: 0; display: grid; place-items: center; background: #0b0820d9; text-align: center; padding: 24px; pointer-events: auto; }
+    #overlay.hidden { display: none; }
+    #card { max-width: 560px; }
+    #card h1 { margin: 0 0 4px; font-size: 40px; color: #ffd27a; letter-spacing: 1px; }
+    #card h2 { margin: 0 0 14px; font-size: 18px; font-weight: 400; color: #d6b8ff; }
+    #card p { line-height: 1.55; margin: 8px 0; }
+    #card .keys { display: inline-grid; grid-template-columns: auto auto; gap: 4px 14px; text-align: left; margin: 10px 0; }
+    #card kbd { background: #2a2050; border: 1px solid #ffb34766; border-radius: 6px; padding: 1px 8px; color: #ffd27a; }
+    #card .cta { margin-top: 16px; font-size: 18px; color: #ffd27a; animation: blink 1.4s infinite; }
+    @keyframes blink { 50% { opacity: .45; } }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <div class="panel">
+      <div class="row"><span>Ngọn lửa</span><span id="flames"></span></div>
+      <div class="row"><span>Đom đóm</span><b id="carried">0/10</b></div>
+      <div class="bar"><i id="carriedBar"></i></div>
+      <div class="row"><span>Đèn đã thắp</span><span id="lanterns"></span></div>
+      <div class="row"><span>Tỏa sáng <kbd>F</kbd></span><b id="pulse">sẵn sàng</b></div>
+    </div>
+    <div class="panel right">
+      <div id="time">5:00</div>
+      <div id="score">0 điểm</div>
+    </div>
+    <div id="toasts"></div>
+    <div id="prompt"></div>
+    <div id="hurt"></div>
+  </div>
+  <div id="overlay"><div id="card"></div></div>
+  <script type="module" src="/src/web/main.ts"></script>
+</body>
+</html>
