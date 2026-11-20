@@ -5,6 +5,14 @@ import { execSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
+// Guard: this generator encodes Phase 1 (Contract v1.0) numbers and overwrites docs/proof/phase-1,
+// which must stay identical to the `phase-1` tag. Never run it against the v1.1 rules.
+const contractVersion = JSON.parse(readFileSync("game.contract.json", "utf8")).contract_version;
+if (contractVersion !== "1.0") {
+  console.error(`proof-phase1: game.contract.json is v${contractVersion}; this script is only valid at tag phase-1 (v1.0). Refusing to overwrite Phase 1 evidence.`);
+  process.exit(2);
+}
+
 const ROOT = "docs/proof/phase-1";
 mkdirSync(`${ROOT}/scenarios`, { recursive: true });
 mkdirSync(`${ROOT}/runs`, { recursive: true });

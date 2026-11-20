@@ -11,7 +11,7 @@
     "headless": "node src/headless/cli.ts",
     "test": "node --test \"tests/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
-    "proof": "node scripts/proof.ts"
+    "proof:phase1": "node scripts/proof.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

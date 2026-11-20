@@ -10,9 +10,9 @@ const d = (ax: number, az: number, bx: number, bz: number) => Math.hypot(ax - bx
 
 function play(seed: number) {
   const hits: number[] = [];
-  const sim = createSim(parseScenario(undefined), seed, (e) => { if (e.name === "player_hit") hits.push(e.tick); });
-  let reason = "timeout";
-  const inp: InputState = { mx: 0, mz: 0, yaw: 0, jump: false, interact: false, pulse: false };
+  const sim = createSim(parseScenario(undefined), seed, 1, (e) => { if (e.name === "player_hit") hits.push(e.tick); });
+  const reason = "timeout";
+  const inp: InputState = { mx: 0, mz: 0, yaw: 0, jump: false, interact: false, pulse: false, dash: false, pause: false };
   for (let k = 0; k < 330 * 60 && sim.isPlaying(); k++) {
     const v = sim.view(), p = v.player;
     const unlit = v.lanterns.filter((l) => !l.lit);

@@ -10,7 +10,7 @@ document.body.prepend(world.domElement);
 
 type Phase = "menu" | "playing" | "over";
 let phase: Phase = "menu";
-let sim = createSim(parseScenario(undefined), 1, () => {});
+let sim = createSim(parseScenario(undefined), 1, 1, () => {});
 let k = 0;
 let camYaw = 0;
 let lastReason = "";
@@ -44,6 +44,8 @@ function readInput(): InputState {
     jump: held.has("Space") || latch.jump,
     interact: held.has("KeyE") || latch.interact,
     pulse: held.has("KeyF") || latch.pulse,
+    dash: held.has("ShiftLeft") || held.has("ShiftRight"),
+    pause: false, // pause menu arrives with the Phase 2 client work
   };
 }
 function worldDir(i: InputState) {
@@ -72,8 +74,8 @@ function onEvent(line: OutLine) {
   const e = line as { name: string; data: Record<string, unknown> };
   const v = sim.view();
   switch (e.name) {
-    case "mote_picked": toast(`+${T.score.per_mote} đom đóm`); break;
-    case "deposit": toast(`Nạp ${e.data.amount} đom đóm vào đèn ${e.data.lantern_id}`); break;
+    case "mote_picked": toast("Nhặt được 1 đom đóm"); break;
+    case "deposit": toast(`Nạp ${e.data.amount} đom đóm vào đèn ${e.data.lantern_id} (+${Number(e.data.amount) * T.score.per_mote})`); break;
     case "lantern_lit": toast(`Đèn ${e.data.lantern_id} đã sáng! +${T.score.per_lantern}`); break;
     case "pulse": {
       world.addPulse(v.player.x, v.player.z);
@@ -153,7 +155,7 @@ function endCard(v: ReturnType<typeof sim.view>) {
 function start() {
   const seed = (Date.now() ^ Math.floor(Math.random() * 2 ** 32)) >>> 0; // seed chosen here; the sim itself stays pure
   lastReason = "";
-  sim = createSim(parseScenario(undefined), seed, onEvent);
+  sim = createSim(parseScenario(undefined), seed, 1, onEvent);
   k = 0;
   latch.jump = latch.interact = latch.pulse = false;
   world.reset();

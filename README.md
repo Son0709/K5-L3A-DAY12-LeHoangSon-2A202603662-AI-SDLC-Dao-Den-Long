@@ -41,8 +41,8 @@ Mã thoát: 0 bình thường, 2 nếu file scenario/inputs sai định dạng, 
 Các khái niệm của contract mà game không có: `fall_enabled` là `false` (rìa đảo là tường chặn, không rơi), nên không có sự kiện `player_hit` với `by: "fall"`.
 
 ## Kiểm chứng
-- `npm test`: 66 unit test (luật chơi, tất định, CLI, contract).
-- `npm run proof`: chạy CLI thật qua 7 tình huống, tự đối chiếu và sinh bằng chứng ở [docs/proof/phase-1/](docs/proof/phase-1/README.md).
+- `npm test`: unit test (luật chơi v1.1, tất định, CLI, contract).
+- Bằng chứng Phase 1 ở [docs/proof/phase-1/](docs/proof/phase-1/README.md) (khớp tag `phase-1`, sinh bằng `npm run proof` ở tag đó). Bằng chứng Phase 2 đang được xây dựng.
 - `node scripts/bot.ts 20`: một bot chơi thử qua lõi mô phỏng để kiểm tra ván thắng được.
 
 ## Tài liệu

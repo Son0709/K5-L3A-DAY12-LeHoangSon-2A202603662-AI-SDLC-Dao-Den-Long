@@ -3,11 +3,15 @@ import { InputError } from "./errors.ts";
 export type Vec3 = [number, number, number];
 
 export interface ScenarioSpec {
-  player: { pos?: Vec3; carried?: number; flames?: number };
+  player: { pos?: Vec3; carried?: number; flames?: number; invulnTicks?: number; dashCdTicks?: number; pulseCdTicks?: number; charmTicks?: number };
   randomMotes: boolean;
   randomShades: boolean;
-  motes?: { pos: Vec3 }[];
-  shades?: { id?: string; pos: Vec3 }[];
+  randomDrifters: boolean;
+  windEnabled?: boolean;
+  motes?: { pos: Vec3; kind?: "random" | "dropped"; ttlS?: number }[];
+  shades?: { id?: string; pos: Vec3; state?: string; stateTicksLeft?: number }[];
+  drifters?: { id?: string; pos: Vec3; state?: string; stolen?: number }[];
+  charms?: { id: string; pos?: Vec3; available?: boolean; respawnS?: number }[];
   lanterns: { id: string; pos?: Vec3; deposited?: number; lit?: boolean }[];
   timeLeft?: number;
 }
@@ -20,6 +24,7 @@ export interface Frame {
   interact?: boolean;
   pulse?: boolean;
   dash?: boolean;
+  pause?: boolean;
 }
 
 type Obj = Record<string, unknown>;
@@ -27,7 +32,6 @@ const isObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !
 const fail = (msg: string): never => {
   throw new InputError(msg);
 };
-
 function num(v: unknown, path: string): number {
   if (typeof v !== "number" || !Number.isFinite(v)) fail(`${path}: expected a finite number`);
   return v as number;
@@ -36,54 +40,86 @@ function bool(v: unknown, path: string): boolean {
   if (typeof v !== "boolean") fail(`${path}: expected a boolean`);
   return v as boolean;
 }
+function str(v: unknown, path: string): string {
+  if (typeof v !== "string") fail(`${path}: expected a string`);
+  return v as string;
+}
 function vec3(v: unknown, path: string): Vec3 {
   if (!Array.isArray(v) || v.length !== 3) fail(`${path}: expected [x, y, z]`);
   const a = v as unknown[];
   return [num(a[0], `${path}[0]`), num(a[1], `${path}[1]`), num(a[2], `${path}[2]`)];
 }
+function list(v: unknown, path: string): unknown[] {
+  if (!Array.isArray(v)) fail(`${path}: expected an array`);
+  return v as unknown[];
+}
+const item = (v: unknown, path: string): Obj => (isObj(v) ? v : fail(`${path}: expected an object`));
 
 export function parseScenario(raw: unknown): ScenarioSpec {
-  if (raw === undefined) return { player: {}, randomMotes: true, randomShades: true, lanterns: [] };
+  const sc: ScenarioSpec = { player: {}, randomMotes: true, randomShades: true, randomDrifters: true, lanterns: [] };
+  if (raw === undefined) return sc;
   if (!isObj(raw)) return fail("scenario: expected a JSON object");
-  const sc: ScenarioSpec = { player: {}, randomMotes: true, randomShades: true, lanterns: [] };
 
   if (raw.player !== undefined) {
-    if (!isObj(raw.player)) fail("scenario.player: expected an object");
-    const p = raw.player as Obj;
+    const p = item(raw.player, "player");
     if (p.pos !== undefined) sc.player.pos = vec3(p.pos, "player.pos");
-    if (p.carried !== undefined) sc.player.carried = num(p.carried, "player.carried");
-    if (p.flames !== undefined) sc.player.flames = num(p.flames, "player.flames");
+    for (const [k, f] of [["carried", "carried"], ["flames", "flames"], ["invuln_ticks", "invulnTicks"], ["dash_cd_ticks", "dashCdTicks"], ["pulse_cd_ticks", "pulseCdTicks"], ["charm_ticks", "charmTicks"]] as const) {
+      if (p[k] !== undefined) sc.player[f] = num(p[k], `player.${k}`);
+    }
   }
   if (raw.random_motes !== undefined) sc.randomMotes = bool(raw.random_motes, "random_motes");
   if (raw.random_shades !== undefined) sc.randomShades = bool(raw.random_shades, "random_shades");
+  if (raw.random_drifters !== undefined) sc.randomDrifters = bool(raw.random_drifters, "random_drifters");
+  if (raw.wind_enabled !== undefined) sc.windEnabled = bool(raw.wind_enabled, "wind_enabled");
   if (raw.time_left_s !== undefined) sc.timeLeft = num(raw.time_left_s, "time_left_s");
 
   if (raw.motes !== undefined) {
-    if (!Array.isArray(raw.motes)) fail("motes: expected an array");
-    sc.motes = (raw.motes as unknown[]).map((m, i) => ({
-      pos: vec3(isObj(m) ? m.pos : m, `motes[${i}]`),
-    }));
+    sc.motes = list(raw.motes, "motes").map((m, i) => {
+      if (Array.isArray(m)) return { pos: vec3(m, `motes[${i}]`) };
+      const o = item(m, `motes[${i}]`);
+      const out: NonNullable<ScenarioSpec["motes"]>[number] = { pos: vec3(o.pos, `motes[${i}].pos`) };
+      if (o.kind !== undefined) {
+        if (o.kind !== "random" && o.kind !== "dropped") fail(`motes[${i}].kind: expected "random" or "dropped"`);
+        out.kind = o.kind as "random" | "dropped";
+      }
+      if (o.ttl_s !== undefined) out.ttlS = num(o.ttl_s, `motes[${i}].ttl_s`);
+      return out;
+    });
   }
   if (raw.shades !== undefined) {
-    if (!Array.isArray(raw.shades)) fail("shades: expected an array");
-    sc.shades = (raw.shades as unknown[]).map((s, i) => {
-      if (!isObj(s)) return fail(`shades[${i}]: expected an object`);
-      const o = s as Obj;
-      const out: { id?: string; pos: Vec3 } = { pos: vec3(o.pos, `shades[${i}].pos`) };
-      if (o.id !== undefined) {
-        if (typeof o.id !== "string") fail(`shades[${i}].id: expected a string`);
-        out.id = o.id as string;
-      }
+    sc.shades = list(raw.shades, "shades").map((s, i) => {
+      const o = item(s, `shades[${i}]`);
+      const out: NonNullable<ScenarioSpec["shades"]>[number] = { pos: vec3(o.pos, `shades[${i}].pos`) };
+      if (o.id !== undefined) out.id = str(o.id, `shades[${i}].id`);
+      if (o.state !== undefined) out.state = str(o.state, `shades[${i}].state`);
+      if (o.state_ticks_left !== undefined) out.stateTicksLeft = num(o.state_ticks_left, `shades[${i}].state_ticks_left`);
+      return out;
+    });
+  }
+  if (raw.drifters !== undefined) {
+    sc.drifters = list(raw.drifters, "drifters").map((d, i) => {
+      const o = item(d, `drifters[${i}]`);
+      const out: NonNullable<ScenarioSpec["drifters"]>[number] = { pos: vec3(o.pos, `drifters[${i}].pos`) };
+      if (o.id !== undefined) out.id = str(o.id, `drifters[${i}].id`);
+      if (o.state !== undefined) out.state = str(o.state, `drifters[${i}].state`);
+      if (o.stolen !== undefined) out.stolen = num(o.stolen, `drifters[${i}].stolen`);
+      return out;
+    });
+  }
+  if (raw.charms !== undefined) {
+    sc.charms = list(raw.charms, "charms").map((c, i) => {
+      const o = item(c, `charms[${i}]`);
+      const out: NonNullable<ScenarioSpec["charms"]>[number] = { id: str(o.id, `charms[${i}].id`) };
+      if (o.pos !== undefined) out.pos = vec3(o.pos, `charms[${i}].pos`);
+      if (o.available !== undefined) out.available = bool(o.available, `charms[${i}].available`);
+      if (o.respawn_s !== undefined) out.respawnS = num(o.respawn_s, `charms[${i}].respawn_s`);
       return out;
     });
   }
   if (raw.lanterns !== undefined) {
-    if (!Array.isArray(raw.lanterns)) fail("lanterns: expected an array");
-    sc.lanterns = (raw.lanterns as unknown[]).map((l, i) => {
-      if (!isObj(l)) return fail(`lanterns[${i}]: expected an object`);
-      const o = l as Obj;
-      if (typeof o.id !== "string") fail(`lanterns[${i}].id: expected a string`);
-      const out: ScenarioSpec["lanterns"][number] = { id: o.id as string };
+    sc.lanterns = list(raw.lanterns, "lanterns").map((l, i) => {
+      const o = item(l, `lanterns[${i}]`);
+      const out: ScenarioSpec["lanterns"][number] = { id: str(o.id, `lanterns[${i}].id`) };
       if (o.pos !== undefined) out.pos = vec3(o.pos, `lanterns[${i}].pos`);
       if (o.deposited !== undefined) out.deposited = num(o.deposited, `lanterns[${i}].deposited`);
       if (o.lit !== undefined) out.lit = bool(o.lit, `lanterns[${i}].lit`);
@@ -95,12 +131,11 @@ export function parseScenario(raw: unknown): ScenarioSpec {
 
 export function parseInputs(raw: unknown): Frame[] {
   if (raw === undefined) return [];
-  if (!isObj(raw) || !Array.isArray(raw.frames)) return fail("inputs: expected {\"frames\": [...]}");
+  if (!isObj(raw) || !Array.isArray(raw.frames)) return fail('inputs: expected {"frames": [...]}');
   const frames: Frame[] = [];
   let last = -1;
   (raw.frames as unknown[]).forEach((f, i) => {
-    if (!isObj(f)) fail(`frames[${i}]: expected an object`);
-    const o = f as Obj;
+    const o = item(f, `frames[${i}]`);
     const tick = num(o.tick, `frames[${i}].tick`);
     if (!Number.isInteger(tick) || tick < 0) fail(`frames[${i}].tick: expected a non-negative integer`);
     if (tick <= last) fail(`frames[${i}].tick: ticks must be strictly increasing`);
@@ -115,7 +150,7 @@ export function parseInputs(raw: unknown): Frame[] {
       fr.move = [x, z];
     }
     if (o.cam_yaw_deg !== undefined) fr.cam_yaw_deg = num(o.cam_yaw_deg, `frames[${i}].cam_yaw_deg`);
-    for (const k of ["jump", "interact", "pulse", "dash"] as const) {
+    for (const k of ["jump", "interact", "pulse", "dash", "pause"] as const) {
       if (o[k] !== undefined) fr[k] = bool(o[k], `frames[${i}].${k}`);
     }
     frames.push(fr);
