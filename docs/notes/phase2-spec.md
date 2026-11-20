@@ -42,6 +42,9 @@ Nguồn: Ticket-02 "Ba hòn đảo". Số liệu chuẩn nằm trong `game.contr
 - **A20** Gió mạnh: chu kỳ 1800 tick, cơn thứ c (c >= 1) bắt đầu ở tick 1800c, kéo dài 300 tick, báo trước 120 tick; hướng chọn ngẫu nhiên theo seed khi bắt đầu báo trước và giữ tới hết cơn (`wind.dir_deg` hiện hướng sắp tới ngay trong lúc báo trước, `active` chỉ true khi đang thổi). Gió dịch chuyển người chơi 2 m/s theo hướng đó, vẫn bị tường chặn.
 - **A21** Gió Lạc, Bóng Mực bay lơ lửng nên đi qua vách tầng; chỉ tháp chuông chặn Bóng Mực và người chơi.
 
+- **A22** Gió Lạc: sinh ở các điểm sương = 16 điểm sinh Bóng Mực của bản đồ (rìa đảo), chỉ Đêm 2 và 3; tối đa 2 con cùng lúc, lượt sinh bị bỏ nếu đã đủ 2. Hình bay lơ lửng cao 1.0 m trên mặt đất, bay xuyên vách và vật cản, không bị vùng an toàn chặn. Chỉ trạng thái `chase` mới cướp (idle chạm người mang < 5 thì không). Đom đóm bị cướp được thả tại vị trí Gió Lạc (kind `dropped`, sống 480 tick). Gió Lạc đã `removed` không còn trong snapshot. `drifter_steal.carried` là số đom đóm Mây còn mang sau khi bị cướp.
+- **A23** `night_start {night}` phát một lần ở tick 1 (bước đầu tiên không bị tạm dừng); dựng scenario vẫn không phát sự kiện. Bùa Gió: hiệu lực từ tick sau tick nhặt, `charm_s` lúc nhặt là 10.0; còn bùa thì lướt bỏ qua cả hồi chiêu đang chạy (vẫn cần nhấn lại, nhấn khi đang lướt bị bỏ qua).
+
 ## 3. Tiêu chí nghiệm thu (acceptance criteria)
 
 **Số liệu chuẩn (Phần 1)**

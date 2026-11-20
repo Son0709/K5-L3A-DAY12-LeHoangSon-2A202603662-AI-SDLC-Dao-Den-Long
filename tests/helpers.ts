@@ -32,7 +32,9 @@ export function sim(o: SimOpts) {
     ticks: o.ticks,
     snapshotEvery: o.every,
   });
-  const events = lines.filter((l) => l.type === "event");
+  // `night_start` is a bookkeeping event; it is excluded here so rule tests can compare whole event lists.
+  // Use `lines` to see it.
+  const events = lines.filter((l) => l.type === "event" && l.name !== "night_start");
   const snaps = lines.filter((l) => l.type === "snapshot");
   return {
     lines,

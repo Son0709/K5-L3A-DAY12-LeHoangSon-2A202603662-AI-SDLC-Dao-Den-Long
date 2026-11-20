@@ -11,6 +11,8 @@ import {
   HIT_DY, JUMP_V, MOTE_CAP, MOTE_INITIAL, MOTE_SPAWN_EVERY, MOTE_TTL, PICKUP_DY, PULSE_CENTER_DY, PUSH_TICKS,
   RECOIL_M, RECOIL_TICKS, RESPAWN_WAIT, SHADE_BASE_Y, SHADE_DETECT, SHADE_LOSE, SHADE_MIN_SPAWN_DIST, SHADE_SPAWN_TICKS,
   SHADE_WANDER_RETARGET, SHADE_WANDER_SPEED, STEP_DOWN, STEP_UP, T, sec,
+  DRIFT_BASE_Y, DRIFT_DROP_FLEE_TICKS, DRIFT_EVERY, DRIFT_FLEE_TICKS, DRIFT_IDLE_SPEED, DRIFT_MAX, DRIFT_MIN_CARRIED,
+  DRIFT_NEAR, DRIFT_SPEED, DRIFT_STEAL, DRIFT_STEAL_R,
 } from "./tuning.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,6 +31,11 @@ interface Shade {
   id: string; x: number; y: number; z: number; baseOff: number; mode: "wander" | "chase";
   stun: number; spawn: number; recoil: number; expel: number; expelFrom: number;
   pdx: number; pdz: number; push: number; rdx: number; rdz: number; wdx: number; wdz: number; wt: number;
+}
+
+interface Drifter {
+  id: string; x: number; y: number; z: number; baseOff: number; state: "idle" | "chase" | "flee";
+  stolen: number; fleeLeft: number; wdx: number; wdz: number; wt: number;
 }
 
 const r3 = (v: number) => Math.round(v * 1000) / 1000 + 0; // "+ 0" turns -0 into 0
@@ -134,6 +141,21 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
   }
   const shadeState = (s: Shade) => (s.stun > 0 ? "stunned" : s.spawn > 0 ? "spawning" : s.recoil > 0 || s.expel > 0 ? "recoil" : s.mode);
 
+  // ------------------------------------------------------------------ drifters (Gió Lạc)
+  const drifters: Drifter[] = [];
+  let nextDrifter = 1;
+  const addDrifter = (x: number, y: number, z: number, id?: string, state: Drifter["state"] = "idle", stolen = 0) => {
+    let did = id;
+    if (!did || drifters.some((d) => d.id === did)) {
+      while (drifters.some((d) => d.id === `D${nextDrifter}`)) nextDrifter++;
+      did = `D${nextDrifter++}`;
+    }
+    drifters.push({ id: did, x, y, z, baseOff: y - (H(x, z) ?? 0), state, stolen, fleeLeft: state === "flee" ? DRIFT_FLEE_TICKS : 0, wdx: 0, wdz: 0, wt: 0 });
+  };
+  for (const u of sc.drifters ?? []) {
+    addDrifter(u.pos[0], u.pos[1], u.pos[2], u.id, u.state === "chase" || u.state === "flee" ? u.state : "idle", u.stolen ?? 0);
+  }
+
   // ------------------------------------------------------------------ helpers
   const respawnPlayer = () => {
     Object.assign(P, { x: map.start.x, y: map.start.y, z: map.start.z, vx: 0, vy: 0, vz: 0, grounded: true, launched: false, dashT: 0, invuln: sec(T.invuln_s), out: false, wait: 0 });
@@ -155,7 +177,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
     if (wish > 1e-6) { P.fx = wx / wish; P.fz = wz / wish; }
     const speed = P.charm > 0 ? CHARM_SPEED : T.player_speed;
 
-    if (dashE && P.dashT === 0 && P.dashCd === 0) {
+    if (dashE && P.dashT === 0 && (P.dashCd === 0 || P.charm > 0)) { // a charm ignores any running cooldown
       P.dashT = sec(T.dash_duration_s);
       P.dashCd = P.charm > 0 ? 0 : sec(T.dash_cooldown_s);
       P.dashDx = P.fx; P.dashDz = P.fz;
@@ -237,6 +259,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
       paused = false; emit(tick, "resumed", {});
     } else if (paused) return;
     simTick++;
+    if (simTick === 1) emit(tick, "night_start", { night: map.night });
 
     // 2. counters
     if (P.dashCd > 0) P.dashCd--;
@@ -323,6 +346,17 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
         ids.push(s.id);
       }
       emit(tick, "pulse", { stunned_ids: ids });
+      // drifters in range: a chasing one flees without stealing; a fleeing one drops its loot and vanishes after 120 ticks
+      for (const d of drifters) {
+        if (Math.hypot(d.x - P.x, d.y - cy, d.z - P.z) > T.pulse_radius + EPS) continue;
+        if (d.state === "chase") { d.state = "flee"; d.fleeLeft = DRIFT_FLEE_TICKS; }
+        else if (d.state === "flee" && d.stolen > 0) {
+          const gy = H(d.x, d.z) ?? d.y - d.baseOff;
+          for (let i = 0; i < d.stolen; i++) addMote(d.x, gy, d.z, "dropped", MOTE_TTL);
+          emit(tick, "drifter_drop", { drifter_id: d.id, amount: d.stolen });
+          d.stolen = 0; d.fleeLeft = DRIFT_DROP_FLEE_TICKS;
+        }
+      }
     }
 
     // 8. shades move
@@ -378,7 +412,36 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
       if (h !== null) s.y = h + s.baseOff;
     }
 
-    // 9. contact: shades hit in ascending id order, at most one flame lost per tick
+    // 8b. drifters move (they ignore terrain walls and safe zones)
+    for (const d of [...drifters]) {
+      const dxp = P.x - d.x, dzp = P.z - d.z, dd = Math.hypot(dxp, dzp);
+      if (d.state !== "flee") d.state = !P.out && P.carried >= DRIFT_MIN_CARRIED && dd <= DRIFT_NEAR + EPS ? "chase" : "idle";
+      const step = DRIFT_SPEED * DT;
+      if (d.state === "chase") {
+        if (dd > 0) { const s = Math.min(step, dd); d.x += (dxp / dd) * s; d.z += (dzp / dd) * s; }
+      } else if (d.state === "flee") {
+        d.x += (dd > 0 ? -dxp / dd : 1) * step; d.z += (dd > 0 ? -dzp / dd : 0) * step;
+        if (--d.fleeLeft <= 0) { drifters.splice(drifters.indexOf(d), 1); continue; } // vanishes together with any loot
+      } else {
+        if (--d.wt <= 0) { const a = rng() * 2 * Math.PI; d.wdx = Math.cos(a); d.wdz = Math.sin(a); d.wt = SHADE_WANDER_RETARGET; }
+        d.x += d.wdx * DRIFT_IDLE_SPEED * DT; d.z += d.wdz * DRIFT_IDLE_SPEED * DT;
+      }
+      const h = H(d.x, d.z);
+      if (h !== null) d.y = h + d.baseOff;
+    }
+
+    // 9a. contact: a chasing drifter steals first (once per drifter); invulnerability does not stop it
+    if (!P.out) {
+      for (const d of [...drifters].sort((a, b) => idNum(a.id) - idNum(b.id))) {
+        if (d.state !== "chase" || !within(dist(d.x, d.z, P.x, P.z), DRIFT_STEAL_R)) continue;
+        const amount = Math.min(DRIFT_STEAL, P.carried);
+        if (amount <= 0) continue;
+        P.carried -= amount; d.stolen = amount; d.state = "flee"; d.fleeLeft = DRIFT_FLEE_TICKS;
+        emit(tick, "drifter_steal", { drifter_id: d.id, amount, carried: P.carried });
+      }
+    }
+
+    // 9b. contact: shades hit in ascending id order, at most one flame lost per tick
     if (!P.out && P.invuln === 0) {
       const order = [...shades].sort((a, b) => idNum(a.id) - idNum(b.id));
       for (const s of order) {
@@ -422,6 +485,11 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
       }
     }
 
+    if (sc.randomDrifters && map.drifters && simTick % DRIFT_EVERY === 0 && drifters.length < DRIFT_MAX) {
+      const p = map.shadePoints[Math.floor(rng() * map.shadePoints.length)];
+      addDrifter(p.x, (H(p.x, p.z) ?? 0) + DRIFT_BASE_Y, p.z);
+    }
+
     // 11. win / lose
     if (P.flames <= 0) finish("lost", "no_flames", tick);
     else if (lanterns.every((l) => l.lit)) finish("won", "all_lit", tick);
@@ -441,7 +509,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
     shades: shades.map((s) => ({ id: s.id, pos: [r3(s.x), r3(s.y), r3(s.z)], state: shadeState(s) })),
     motes_active: motes.length,
     motes: motes.map((m) => ({ id: m.id, pos: [r3(m.x), r3(m.y), r3(m.z)], kind: m.kind, ttl_s: m.ttl === null ? null : r3(m.ttl / 60) })),
-    drifters: [],
+    drifters: drifters.map((d) => ({ id: d.id, pos: [r3(d.x), r3(d.y), r3(d.z)], state: d.state, stolen: d.stolen })),
     charms: charms.map((c) => ({ id: c.id, available: c.available, respawn_s: r3(c.respawn / 60) })),
   });
 
@@ -457,6 +525,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
     lanterns,
     shades: shades.map((s) => ({ id: s.id, x: s.x, y: s.y, z: s.z, state: shadeState(s), stunned: s.stun > 0 })),
     motes, charms,
+    drifters: drifters.map((d) => ({ id: d.id, x: d.x, y: d.y, z: d.z, state: d.state, stolen: d.stolen })),
   });
 
   return {

@@ -49,4 +49,13 @@ M2 (Đêm 2 và 3): bản đồ, địa hình, bục nhảy, tầng, dốc, thá
 | Vận tốc phóng của bục nhảy chỉ hiện ở tick sau | Test bục nhảy đỏ, thăm dò bằng script | Sửa code: đặt vận tốc ngay khi phóng |
 | Test độ rộng dốc đặt người chơi xuất phát bên trong vùng dốc, nên không phân biệt được đột biến | Mutation `across <= 2.5` vẫn sống | Sửa test: xuất phát ngoài vùng dốc, kiểm tra dừng ở vách r=24; đột biến bị bắt |
 
+M3 (Gió Lạc, Bùa Gió, `night_start`): 113 test; mutation 16/16.
+
+| Lỗi (M3) | Phát hiện bằng | Xử lý |
+|---|---|---|
+| Quên sự kiện `night_start` (có trong danh sách sự kiện v1.1 nhưng chưa được cài ở M1) | Rà lại danh sách sự kiện của ticket trước khi viết M3 | Phát ở tick 1; helper test loại nó khỏi danh sách để so sánh nguyên danh sách sự kiện, test riêng kiểm tra nó; ghi A23 |
+| M1 làm lướt chỉ bỏ qua hồi chiêu khi `dashCd === 0`, sai với bùa: "không hồi chiêu" phải bỏ qua cả hồi chiêu đang chạy | Đọc lại luật Bùa Gió khi viết test | Sửa điều kiện; test mới (cooldown đang chạy 80 tick vẫn lướt được) |
+| Test so `charm_s` thực với giá trị đã làm tròn 3 chữ số | Test đỏ; đọc giá trị thật 3.333 | Sửa test (sai ở test, code đúng) |
+| Đột biến "vẫn đặt hồi chiêu 90 tick khi có bùa" sống sót | Mutation check | Thêm test bùa hết hiệu lực giữa hai lần lướt; đột biến bị bắt |
+
 Test Phase 1 bị luật Ticket-02 thay (lý do, không phải hồi quy): cost 8→10, pickup/interact radius, pulse (cost/radius/cooldown), safe radius, rìa đảo thành rơi, đom đóm mất hẳn→rơi ra vành, điểm nhặt→điểm nạp, lịch sinh Bóng Mực, `game_over` tức thì→cuối tick. Chúng được viết lại ở `tests/v11-*.test.ts` với số chuẩn; `determinism`, `cli`, `contract` được giữ/cập nhật.

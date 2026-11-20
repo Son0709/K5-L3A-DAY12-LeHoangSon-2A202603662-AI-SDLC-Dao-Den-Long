@@ -46,5 +46,18 @@ export const PUSH_TICKS = 15;
 export const PULSE_CENTER_DY = 0.8;
 export const SHADE_BASE_Y = 1; // default float height of a shade above ground (A15)
 
+// drifters (Gió Lạc), ticket Part 3
+export const DRIFT_SPEED = 7;
+export const DRIFT_IDLE_SPEED = 2;
+export const DRIFT_MAX = 2;
+export const DRIFT_EVERY = 1200;
+export const DRIFT_NEAR = 15;
+export const DRIFT_MIN_CARRIED = 5;
+export const DRIFT_STEAL_R = 1.2;
+export const DRIFT_STEAL = 3;
+export const DRIFT_FLEE_TICKS = 240;
+export const DRIFT_DROP_FLEE_TICKS = 120;
+export const DRIFT_BASE_Y = 1;
+
 // legacy export used by the 3D client for the Night 1 island
 export const ISLAND_R = 40;

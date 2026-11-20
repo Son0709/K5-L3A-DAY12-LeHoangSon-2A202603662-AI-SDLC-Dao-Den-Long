@@ -18,6 +18,8 @@ export interface MapDef {
   obstacles: Obstacle[];
   pads: Pad[];
   wind: boolean;
+  /** Drifters (Gió Lạc) exist on Nights 2 and 3. */
+  drifters: boolean;
   /** Terrain top at (x,z), or null when there is nothing to stand on (cloud sea). */
   heightAt(x: number, z: number): number | null;
 }
@@ -47,6 +49,7 @@ function night1(): MapDef {
     obstacles: [],
     pads: [],
     wind: false,
+    drifters: false,
     heightAt: (x, z) => (Math.hypot(x, z) <= 40 ? 0 : null),
   };
 }
@@ -71,6 +74,7 @@ function night2(): MapDef {
       { x: 50, y: 0, z: -18, r: 1, vy: 14, vh: 24, ...toward({ x: 50, z: -18 }, A) },
     ],
     wind: false,
+    drifters: true,
     heightAt: (x, z) => (Math.hypot(x, z) <= 28 || Math.hypot(x - 70, z) <= 28 || (x >= 26 && x <= 44 && Math.abs(z) <= 2) ? 0 : null),
   };
 }
@@ -104,6 +108,7 @@ function night3(): MapDef {
     obstacles: [{ x: 0, z: 0, r: 2 }], // bell tower on tier 2
     pads: [{ x: 0, y: 3, z: 13, r: 1, vy: 12, vh: 8, dx: 0, dz: -1 }],
     wind: true,
+    drifters: true,
     heightAt,
   };
 }
