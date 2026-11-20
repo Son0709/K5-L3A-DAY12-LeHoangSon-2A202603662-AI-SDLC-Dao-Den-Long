@@ -3,7 +3,7 @@
 > File này do `npm run proof` sinh ra từ lần chạy thật của CLI headless. Không sửa tay.
 > Giá trị mong đợi nằm trong `scripts/proof.ts` và được tính tay từ `docs/notes/assumptions.md`.
 
-- Code commit khi chạy: `fcbb454` (+uncommitted changes in code)
+- Code commit khi chạy: `b32e363`
 - Node v26.13.1, win32 x64
 - Unit tests: 66/66 đạt (chi tiết: `test-report.txt`)
 - Kiểm tra end-to-end: 23/23 đạt
