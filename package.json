@@ -6,7 +6,7 @@
   "description": "Dao Den Long - 3D lantern game with deterministic headless mode",
   "scripts": {
     "headless": "node src/headless/cli.ts",
-    "test": "node --test tests/",
+    "test": "node --test \"tests/**/*.test.ts\"",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
