@@ -4,7 +4,7 @@
 
 Game 3D góc nhìn thứ ba. Mây, người giữ đèn nhỏ tuổi (đội nón lá có treo đèn lồng nhỏ, quàng khăn đỏ), gom đom đóm để thắp lại các Đèn Lồng Lớn và né Bóng Mực trong sương đen qua ba đêm: **Đảo Bến**, **Đảo Cau**, **Đảo Chuông**. Đảo sáng dần lên mỗi khi một ngọn đèn được thắp.
 
-**Trạng thái (Phase 2):** lõi mô phỏng, chế độ headless (Test Contract v1.1) và bản 3D cho cả 3 Đêm đã có. Những gì chưa kiểm chứng (chưa chơi tay trọn ván, chưa nghe âm thanh, nhánh thắng → Bình Minh chưa chạy tự động) được ghi trung thực ở [bằng chứng Phase 2](docs/proof/phase-2/README.md).
+**Trạng thái (Phase 3):** lõi mô phỏng và chế độ headless (Test Contract v1.2: đèn cạn dầu, thắng ở bình minh) đã xong. **Bản 3D chưa theo kịp Phase 3**: nó vẫn chạy được cả 3 Đêm với luật mới (đọc từ lõi) nhưng chưa có thanh dầu, đèn nhấp nháy khi sắp hết dầu, chế độ "Bảng màu dễ phân biệt" và các thông báo `refuel` / `lantern_out`. Quyết định thiết kế: [ADR-0001](docs/notes/adr-0001-lantern-fuel.md); thay đổi phá vỡ tương thích: [CHANGELOG.md](CHANGELOG.md); chỗ chưa kiểm chứng: [bằng chứng Phase 3](docs/proof/phase-3/README.md).
 
 ## Cài đặt và chạy (3 lệnh)
 ```
@@ -29,28 +29,30 @@ Bản tĩnh để chạy ở bất kỳ đâu: `npm run build:web`, rồi phục
 
 Cài đặt (âm lượng, độ nhạy chuột) được lưu lại giữa các lần mở game. Âm thanh được tổng hợp trực tiếp bằng Web Audio (không dùng file âm thanh nào).
 
-## Luật chơi (số chuẩn của Ticket-02)
-- Mang tối đa 10 đom đóm; mỗi đèn cần 10 để sáng. Thắp hết đèn của Đêm thì **thắng** Đêm đó; thắng cả 3 Đêm thì đón Bình Minh, điểm tổng là tổng điểm các Đêm đã thắng. Thua thì chơi lại chính Đêm đó.
-- Bóng Mực đuổi khi Mây vào tầm 12 m (bỏ đuổi ở 18 m). Chạm vào thì mất 1 ngọn lửa (có 3), rơi một nửa số đom đóm đang mang ra quanh Mây (nhặt lại được trong 8 giây), rồi bất tử 1.5 giây; Bóng Mực bị đẩy lùi 2 m. Hết lửa thì thua; hết giờ mà chưa thắp hết đèn cũng thua.
+## Luật chơi (Ticket-02 và Ticket-03 "Đèn cạn dầu")
+- **Mục tiêu: giữ đảo sáng tới bình minh.** Hết giờ (240/270/300 s) mà Mây còn sống và số đèn đang sáng ≥ 60% tổng (3/5, 4/6, 5/7) thì **thắng** Đêm đó. Thắp đủ đèn không kết thúc Đêm. Hết Ngọn Lửa, hoặc hết giờ mà thiếu đèn thì thua; thua thì chơi lại chính Đêm đó. Thắng cả 3 Đêm thì đón Bình Minh, điểm tổng là tổng điểm các Đêm đã thắng.
+- **Đèn có dầu** (tối đa 100, hao 1 mỗi giây). Thắp lần đầu cần 10 đom đóm, đèn tắt rồi thắp lại chỉ cần 5. Bấm E ở đèn đang sáng để châm dầu: mỗi đom đóm cho 10 dầu. Hết dầu thì đèn tắt.
+- **Bóng Mực hút dầu:** đèn dưới 30 dầu mất vùng an toàn, Bóng Mực đi lang thang sẽ tới đèn yếu nhất rồi đứng hút 5 dầu mỗi giây. Lại gần (trong 6 m) thì chúng quay sang đuổi Mây; Tỏa Sáng làm chúng choáng; châm dầu lên ≥ 30 thì chúng bị đẩy ra. Đèn đủ dầu giữ vùng an toàn 6 m.
+- Mang tối đa 10 đom đóm, **tăng 2 mỗi lần thắp thành công** (kể cả thắp lại), tối đa 20.
+- Bóng Mực đuổi khi Mây vào tầm 12 m (bỏ đuổi ở 18 m). Chạm vào thì mất 1 ngọn lửa (có 3), rơi một nửa số đom đóm đang mang ra quanh Mây (nhặt lại được trong 8 giây), rồi bất tử 1.5 giây; Bóng Mực bị đẩy lùi 2 m.
 - Rơi khỏi đảo (Y < -10) mất 1 ngọn lửa và toàn bộ đom đóm, rồi hồi sinh sau 1 giây.
-- Bóng Mực không vào được vòng 6 m quanh đèn đã sáng.
-- Điểm: +10 mỗi đom đóm nạp vào đèn, +100 mỗi đèn thắp, +5 mỗi Bóng Mực trúng Tỏa Sáng. Khi thắng cộng thêm +2 mỗi giây còn lại và +50 mỗi ngọn lửa còn lại.
+- Điểm: +5 mỗi đom đóm nạp vào đèn (thắp hoặc châm dầu), +100 thắp lần đầu, +40 thắp lại, +5 mỗi Bóng Mực trúng Tỏa Sáng (+15 nếu nó đang hút dầu). Khi thắng ở bình minh: mỗi đèn đang sáng +50 và số dầu còn lại, mỗi ngọn lửa còn lại +50.
 - **Đêm 2 (Đảo Cau):** hai đảo nối bằng cầu tre không lan can, bục vàng tung Mây sang đảo bên kia, Gió Lạc cướp đom đóm của người mang từ 5 trở lên, Bùa Gió (chạy 7.2 m/s, lướt không hồi chiêu trong 10 giây).
 - **Đêm 3 (Đảo Chuông):** ba tầng với vách đứng, hai dốc, một bục nhảy lên tầng trên cùng, tháp chuông, và gió mạnh mỗi 30 giây (lá bay báo trước 2 giây).
 
-## Headless (Test Contract v1.1)
+## Headless (Test Contract v1.2)
 Khai báo ở [game.contract.json](game.contract.json). Logic chạy 60 tick/giây, không cần cửa sổ hay GPU:
 ```
 node src/headless/cli.ts --seed <int> --night <1|2|3> [--scenario f.json] [--inputs f.json] --ticks <int> --out <f.jsonl> [--snapshot-every 10]
 ```
-Mã thoát: 0 bình thường, 2 nếu `--night` không hợp lệ hoặc file scenario/inputs sai định dạng, khác 0 nếu lỗi khác. Cùng seed, scenario và inputs cho output giống hệt nhau. Một Đêm đầy đủ (21.600 tick) chạy trong dưới 0.3 giây.
+Mã thoát: 0 bình thường, 2 nếu `--night` không hợp lệ hoặc file scenario/inputs sai định dạng, khác 0 nếu lỗi khác. Cùng seed, scenario và inputs cho output giống hệt nhau. Một Đêm đầy đủ (21.600 tick) chạy trong dưới 0.4 giây.
 
 ## Kiểm chứng
-- `npm test`: unit test (luật v1.1, ba bản đồ, Gió Lạc, Bùa, tất định, CLI, contract).
-- `npm run proof`: chạy CLI thật qua 42 tình huống, tự đối chiếu, đo thời gian một Đêm đầy đủ và sinh bằng chứng ở [docs/proof/phase-2/](docs/proof/phase-2/README.md).
+- `npm test`: unit test (nhiên liệu đèn, hút dầu, luật bình minh, ba bản đồ, Gió Lạc, Bùa, tất định, CLI, contract).
+- `npm run proof`: chạy CLI thật qua 45 tình huống, tự đối chiếu, đo thời gian một Đêm đầy đủ và sinh bằng chứng ở [docs/proof/phase-3/](docs/proof/phase-3/README.md).
 - `npm run fps`: đo FPS của bản 3D ở 1280x720 bằng Chrome thật (cần Chrome; đặt `CHROME_PATH` nếu ở chỗ khác).
 - `npm run screens`: điều khiển bản 3D như người chơi bằng Chrome thật, chụp ảnh, kiểm tra tạm dừng, lưu cài đặt, luồng thua và chơi lại.
-- Bằng chứng Phase 1 ở [docs/proof/phase-1/](docs/proof/phase-1/README.md) (khớp tag `phase-1`).
+- Bằng chứng Phase 1 và 2 ở [docs/proof/phase-1/](docs/proof/phase-1/README.md) và [docs/proof/phase-2/](docs/proof/phase-2/README.md) (khớp các tag tương ứng).
 
 ## Tài liệu
 - Spec và giả định Phase 2: [docs/notes/phase2-spec.md](docs/notes/phase2-spec.md) (Phase 1: [assumptions.md](docs/notes/assumptions.md))

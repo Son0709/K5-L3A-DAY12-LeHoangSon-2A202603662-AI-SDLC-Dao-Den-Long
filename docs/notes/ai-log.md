@@ -104,4 +104,6 @@ Lỗi của AI và cách xử lý (Phase 3):
 
 Giả định chưa được xác nhận: Bóng Mực wander đi tới đèn với `shade_speed`; `refuel` không phát `deposit`.
 
+Bằng chứng Phase 3: `scripts/proof3.ts` (45 check end-to-end qua CLI thật, gồm nhóm hồi quy R1-R6 cho hành vi Phase 1-2 không bị thay thế), `npm run proof` chuyển sang nó; `proof:phase2` đóng băng và tự từ chối trên v1.2. Mutation check trên proof: 7/8 bị bắt; `relight_cost = 6` làm script sập (TypeError) thay vì báo trượt có kiểm soát; `DRAIN_RANGE` chỉ unit test bắt. Cả hai ghi trong README bằng chứng.
+
 Test Phase 1 bị luật Ticket-02 thay (lý do, không phải hồi quy): cost 8→10, pickup/interact radius, pulse (cost/radius/cooldown), safe radius, rìa đảo thành rơi, đom đóm mất hẳn→rơi ra vành, điểm nhặt→điểm nạp, lịch sinh Bóng Mực, `game_over` tức thì→cuối tick. Chúng được viết lại ở `tests/v11-*.test.ts` với số chuẩn; `determinism`, `cli`, `contract` được giữ/cập nhật.
