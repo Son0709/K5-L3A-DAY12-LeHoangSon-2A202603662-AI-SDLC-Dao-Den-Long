@@ -10,11 +10,11 @@ Game 3D, lõi mô phỏng tất định + chế độ headless theo Test Contrac
 - Chơi: `npm start` (= `run_cmd`: build lần đầu, phục vụ game + bảng xếp hạng lưu đĩa tại `data/leaderboard.json`, mở trình duyệt). `npm run dev` cho phát triển (`#play` bỏ qua menu); build tĩnh: `npm run build:web`
 - Xuất bảng xếp hạng: `node scripts/run.ts --export-leaderboard out.json` (`{"entries": [...]}`)
 - Benchmark: `npm run bench` (`bench_cmd`, cần Chrome; ghi `bench.json`); soak: `npm run soak` (`soak_cmd`, ghi `soak.json`); kiểm tra bảng xếp hạng bằng trình duyệt thật: `npm run e2e:leaderboard`
-- Bằng chứng Phase 3: `npm run proof` (chạy CLI thật, sinh `docs/proof/phase-3/`; phải N/N đạt). Chạy sau khi đã commit code để `RESULTS.md` ghi commit sạch.
+- Bằng chứng Phase 4: `npm run proof` (chạy CLI thật, soak, xuất bảng xếp hạng, đọc `bench.json`; sinh `docs/proof/phase-4/`; phải N/N đạt). Chạy sau khi đã commit code để `RESULTS.md` ghi commit sạch.
 - Ảnh chụp và kiểm tra tự động client bằng Chrome thật: `npm run screens` (ghi `docs/proof/phase-2/screens/`)
 - FPS bản 3D: `npm run fps` (cần Chrome, ghi `docs/proof/phase-2/fps.json`; yêu cầu >= 30 FPS ở 1280x720)
 - `node scripts/bot.ts 20`: bot cũ chơi thử Đêm 1 (chỉ tham khảo, chưa chỉnh cho số chuẩn v1.1).
-- `npm run proof:phase1` (v1.0) và `npm run proof:phase2` (v1.1) CHỈ hợp lệ ở tag tương ứng; trên v1.2 chúng tự từ chối để không ghi đè bằng chứng đã tag.
+- `npm run proof:phase1` (v1.0), `proof:phase2` (v1.1) và `proof:phase3` (v1.2) CHỈ hợp lệ ở tag tương ứng; trên v1.3 chúng tự từ chối để không ghi đè bằng chứng đã tag.
 
 ## Harness
 - Skill `.claude/skills/verify/SKILL.md`: quy trình kiểm chứng (typecheck, test, mutation, proof, hiệu năng). Dùng sau mỗi thay đổi luật và trước khi tag.
