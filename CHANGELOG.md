@@ -2,6 +2,24 @@
 
 Định dạng: mỗi phase là một mục. "BREAKING" là thay đổi phá vỡ tương thích với phase trước.
 
+## Phase 4 (Contract v1.3): phát hành v1.0.0
+
+Không có thay đổi phá vỡ tương thích về luật: luật, số liệu và đầu ra headless của v1.0 đến v1.2 giữ nguyên (nhóm hồi quy của `npm run proof` chạy lại các hành vi đó).
+
+### Thêm
+- **Contract v1.3:** `bench_cmd` và `soak_cmd` trong `game.contract.json`; `run_cmd` đổi từ `npm run dev` sang `node scripts/run.ts` (phục vụ game và bảng xếp hạng).
+- **Benchmark** (`scripts/bench.ts`): cảnh chuẩn 200 Bóng Mực wander, 100 đom đóm, camera bay vòng; đo avg FPS, 1% low, p95, thời gian tải, bộ nhớ; `bench.json`. Cờ `bench` của lõi chỉ do client dùng, không đọc từ file scenario.
+- **Soak test** (`scripts/soak.ts`): 10 Đêm liên tiếp trong một tiến trình với input ngẫu nhiên theo seed; `soak.json`. Có làm nóng JIT, công khai trong output.
+- **Bảng xếp hạng cục bộ:** top 10, lưu `data/leaderboard.json`, màn hình từ menu, nhập tên sau Bình Minh hoặc sau khi thua, `--export-leaderboard`. Lùi về `localStorage` khi chạy bản tĩnh.
+- `npm start`, `npm run bench`, `npm run soak`, `npm run e2e:leaderboard`; `scripts/proof4.ts`.
+
+### Thay đổi
+- **Hiệu năng client:** Bóng Mực và đom đóm dựng instanced; HUD chỉ ghi DOM khi giá trị đổi (nút thắt thật của bench: avg 75,7 lên khoảng 105 FPS, 1% low 22,6 lên khoảng 35 trên máy phát triển).
+- Soak: phát hiện qua CI Linux rằng bộ nhớ tăng 28% trong 10 Đêm (JIT, không phải rò rỉ); thêm làm nóng.
+
+### Chưa làm (ghi trung thực)
+Đổi phím, giảm chuyển động, cỡ chữ ≥ 18 px và chữ lớn, chỉ báo hình ảnh đầy đủ, thanh dầu, đèn nhấp nháy, chế độ "Bảng màu dễ phân biệt". Chi tiết ở `docs/proof/phase-4/README.md`.
+
 ## Phase 3 (Contract v1.2): Đèn cạn dầu
 
 Quyết định thiết kế: [docs/notes/adr-0001-lantern-fuel.md](docs/notes/adr-0001-lantern-fuel.md).

@@ -39,6 +39,17 @@ test("soak: memory stays within 1.2x over 10 nights (the ticket's pass criterion
   assert.ok(json.mem_end_mb <= 1.2 * json.mem_start_mb, `${json.mem_start_mb} -> ${json.mem_end_mb} MB`);
 });
 
+test("soak: the warm-up is reported openly and does not change the nights that are played", () => {
+  const warm = soak("w3.json", "--seed", "7", "--nights", "5").json;
+  const cold = soak("w0.json", "--seed", "7", "--nights", "5", "--warmup", "0").json;
+  assert.equal(warm.warmup_nights, 3);
+  assert.equal(cold.warmup_nights, 0);
+  assert.ok(warm.mem_cold_start_mb > 0, "the cold RSS is reported next to the warmed one");
+  assert.equal(cold.mem_cold_start_mb, cold.mem_start_mb, "without warm-up the cold start is the start");
+  assert.deepEqual(warm.results, cold.results);
+  assert.equal(warm.total_ticks, cold.total_ticks);
+});
+
 test("soak: invalid arguments exit non-zero", () => {
   const r = spawnSync(process.execPath, ["scripts/soak.ts", "--nights", "0"], { encoding: "utf8" });
   assert.notEqual(r.status, 0);
