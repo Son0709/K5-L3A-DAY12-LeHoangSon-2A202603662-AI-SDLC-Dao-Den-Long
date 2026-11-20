@@ -7,12 +7,14 @@ Game 3D, lõi mô phỏng tất định + chế độ headless theo Test Contrac
 - Test: `npm test` (node:test, không cần build)
 - Kiểm kiểu: `npm run typecheck`
 - Bằng chứng: `npm run proof` (chạy CLI thật, sinh `docs/proof/phase-1/`; phải 100% đạt trước khi tag)
+- Chơi bản 3D: `npm run dev` (mở `http://localhost:5173`, thêm `#play` để bỏ qua menu); build tĩnh: `npm run build:web`
+- Kiểm tra ván thắng được: `node scripts/bot.ts 20`
 - Headless: `node src/headless/cli.ts --seed 1 --night 1 --ticks 600 --out out/run.jsonl`
 
 ## Cấu trúc
 - `src/sim/`: lõi mô phỏng thuần (KHÔNG import three/DOM/Date/Math.random).
 - `src/headless/`: CLI theo Test Contract v1.0.
-- `src/web/`: lớp hiển thị 3D, chỉ đọc state từ `src/sim/`.
+- `src/web/`: lớp hiển thị 3D (Three.js + Vite), chỉ đọc `sim.view()`; KHÔNG chứa luật chơi. Web và headless dùng chung `createSim`.
 - `tests/`: test đơn vị + scenario; `docs/proof/`: bằng chứng theo phase.
 
 ## Quy ước bắt buộc

@@ -1,0 +1,22 @@
+﻿seed  1: won     lit 5/5 flames 3 hits 0 left 247s score 1307
+seed  2: won     lit 5/5 flames 3 hits 0 left 220s score 1414
+seed  3: won     lit 5/5 flames 3 hits 0 left 217s score 1361
+seed  4: won     lit 5/5 flames 3 hits 0 left 207s score 1492
+seed  5: won     lit 5/5 flames 3 hits 0 left 216s score 1276
+seed  6: won     lit 5/5 flames 3 hits 0 left 209s score 1259
+seed  7: won     lit 5/5 flames 3 hits 0 left 214s score 1343
+seed  8: won     lit 5/5 flames 3 hits 0 left 225s score 1320
+seed  9: won     lit 5/5 flames 3 hits 0 left 201s score 1271
+seed 10: won     lit 5/5 flames 2 hits 1 left 176s score 1746
+seed 11: won     lit 5/5 flames 3 hits 0 left 184s score 1643
+seed 12: won     lit 5/5 flames 3 hits 0 left 246s score 1315
+seed 13: won     lit 5/5 flames 3 hits 0 left 210s score 1315
+seed 14: won     lit 5/5 flames 3 hits 0 left 171s score 1410
+seed 15: won     lit 5/5 flames 3 hits 0 left 193s score 1358
+seed 16: won     lit 5/5 flames 3 hits 0 left 233s score 1328
+seed 17: won     lit 5/5 flames 3 hits 0 left 204s score 1469
+seed 18: won     lit 5/5 flames 3 hits 0 left 185s score 1349
+seed 19: won     lit 5/5 flames 3 hits 0 left 167s score 1336
+seed 20: won     lit 5/5 flames 3 hits 0 left 211s score 1260
+
+greedy bot: 20/20 won; mean lit lanterns 5.00/5

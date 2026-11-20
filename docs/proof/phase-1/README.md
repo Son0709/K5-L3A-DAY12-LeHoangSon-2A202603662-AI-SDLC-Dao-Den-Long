@@ -24,11 +24,13 @@ Giả định và số tuning: [../../notes/assumptions.md](../../notes/assumpti
 | R12 | Tọa độ làm tròn 3 chữ số | Check C6.c | RESULTS.md | Đạt |
 | R14 | Điểm số theo bảng tuning | Check C1.d, C3.d; unit test | RESULTS.md | Đạt |
 | R15 | `game.contract.json` khai đúng tuning | Unit test `contract` | `test-report.txt` | Đạt |
-| R13 | Game 3D chơi được, HUD, chơi lại, Mây đội nón lá | Chưa làm | Không có | **Chưa đạt** (bản 3D chưa xây) |
+| R13 | Game 3D chơi được, HUD, chơi lại, Mây đội nón lá | Ảnh chụp bản build thật (Chrome headless); bot tham lam chơi qua lõi `createSim` (`node scripts/bot.ts`) | `screens/menu.png`, `screens/play-start.png`, `bot-playability.txt` | **Đạt một phần**: cảnh 3D, HUD, nón lá + đèn nhỏ render đúng; ván thắng được (bot 20/20). **Chưa có** bằng chứng người chơi thật chơi trọn ván trên trình duyệt, và chưa chụp màn thắng/thua |
 
 ## Giới hạn đã biết (trung thực)
 
 - **Bằng chứng này chỉ chứng minh code khớp giả định của tôi.** Test và code cùng dựa trên [assumptions.md](../../notes/assumptions.md). Chưa có cách biết khớp với test ẩn của giảng viên. Rủi ro lớn nhất: giả định 7 (điều kiện tỏa sáng), 9 (đèn chưa sáng không cản Bóng Mực), 11 (đom đóm rơi mất hẳn).
 - Mutation check đã chạy một lần: đổi `per_lantern` từ 100 thành 101 làm test và `proof` thất bại như mong đợi (350 so với 349), nên các check không đạt vô điều kiện.
 - Sự kiện `dash` không có trong game (contract chỉ nói "nếu có").
-- R2: cảm giác điều khiển, camera và hiển thị thuộc bản 3D, chưa kiểm chứng.
+- R2: phần logic đã có test; cảm giác điều khiển và camera trong bản 3D chưa được kiểm chứng bằng chơi tay.
+- Bot chơi dễ: thắng 20/20 seed, chỉ bị chạm 1 lần trong 20 ván. Bot chỉ chứng minh ván **thắng được**, không chứng minh game **thú vị**. Độ khó có thể thấp với người chơi, tuning bị khóa theo contract (`shade_speed` 4 so với `player_speed` 6).
+- Ảnh chụp dùng WebGL phần mềm (SwiftShader) nên không phản ánh hiệu năng thật; số đo hiệu năng thuộc Phase sau.
