@@ -1,0 +1,25 @@
+{
+  "nights": 10,
+  "crashes": 0,
+  "results": [
+    "lost",
+    "lost",
+    "lost",
+    "lost",
+    "lost",
+    "lost",
+    "lost",
+    "lost",
+    "lost",
+    "lost"
+  ],
+  "mem_start_mb": 56.4,
+  "mem_end_mb": 63,
+  "total_ticks": 22081,
+  "duration_s": 0.2,
+  "seed": 7,
+  "gc_exposed": true,
+  "node": "v26.13.1",
+  "os": "win32 x64",
+  "contract_version": "1.3"
+}

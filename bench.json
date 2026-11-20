@@ -1,0 +1,17 @@
+{
+  "contract_version": "1.3",
+  "avg_fps": 92.7,
+  "p1_low_fps": 30.3,
+  "frame_ms_p95": 14.2,
+  "frames": 2782,
+  "load_ms": 2625,
+  "peak_mem_mb": 1103,
+  "vsync_off": true,
+  "renderer": "three.js r187 (WebGL) on Chrome/157.0.8103.80; GPU: ANGLE (Intel, Intel(R) UHD Graphics (0x00009A68) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "os": "Windows_NT 10.0.26200 x64, 11th Gen Intel(R) Core(TM) i5-11400H @ 2.70GHz (12 threads), 16 GB RAM",
+  "window": "1280x720, windowed",
+  "power_source": "AC",
+  "vsync_probe_fps": 57,
+  "min_frame_ms": 0.1,
+  "peak_mem_note": "peak resident memory of the whole browser process tree, sampled every ~4 s during the measurement"
+}
