@@ -63,6 +63,12 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
   let prev = { jump: false, interact: false, pulse: false, dash: false, pause: false };
   const left = () => timeTicks - simTick;
 
+  // strong wind (A20): cycle c>=1 starts at tick 1800c, blows 300 ticks, warned 120 ticks before
+  const WIND_PERIOD = 1800, WIND_WARN = 120, WIND_TICKS = 300, WIND_SPEED = 2;
+  const windOn = sc.windEnabled ?? map.wind;
+  let windDir = 0;
+  let windActive = false;
+
   const emit = (tick: number, name: string, data: Record<string, unknown>) => onEvent({ type: "event", tick, name, data });
 
   // ------------------------------------------------------------------ lanterns
@@ -177,6 +183,10 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
     else if (canGo(nx, P.z)) P.x = nx;
     else if (canGo(P.x, nz)) P.z = nz;
     else { P.vx = 0; P.vz = 0; }
+    if (windActive) {
+      const wxd = Math.cos((windDir * Math.PI) / 180) * WIND_SPEED * DT, wzd = Math.sin((windDir * Math.PI) / 180) * WIND_SPEED * DT;
+      if (canGo(P.x + wxd, P.z + wzd)) { P.x += wxd; P.z += wzd; }
+    }
 
     // vertical
     let airborne = !P.grounded;
@@ -198,6 +208,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
       for (const pad of map.pads) {
         if (within(dist(P.x, P.z, pad.x, pad.z), pad.r) && P.y <= pad.y + 0.3) {
           P.vy = pad.vy; P.lvx = pad.dx * pad.vh; P.lvz = pad.dz * pad.vh; P.launched = true; P.grounded = false;
+          P.vx = P.lvx; P.vz = P.lvz; // the launch velocity is visible immediately, not one tick later
           break;
         }
       }
@@ -238,6 +249,10 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
       if (ttl !== null) { motes[i].ttl = ttl - 1; if (ttl - 1 < 0) motes.splice(i, 1); }
     }
     for (const c of charms) if (!c.available && c.respawn > 0 && --c.respawn === 0) c.available = true;
+    if (windOn) {
+      if (simTick >= WIND_PERIOD - WIND_WARN && (simTick + WIND_WARN) % WIND_PERIOD === 0) windDir = rng() * 360; // warning starts: pick the direction
+      windActive = simTick >= WIND_PERIOD && simTick % WIND_PERIOD < WIND_TICKS;
+    }
     if (P.out && P.flames > 0 && P.wait > 0 && --P.wait === 0) respawnPlayer();
 
     // 3. player movement + fall
@@ -417,7 +432,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
   const snapshot = (tick: number): OutLine => ({
     type: "snapshot", tick, sim_tick: simTick, state: paused && state === "playing" ? "paused" : state, night: map.night,
     time_left_s: r3(Math.max(0, left()) / 60), score,
-    wind: { active: false, dir_deg: 0 },
+    wind: { active: windActive, dir_deg: r3(windDir) },
     player: {
       pos: [r3(P.x), r3(P.y), r3(P.z)], vel: [r3(P.vx), r3(P.vy), r3(P.vz)], flames: P.flames, carried: P.carried,
       grounded: P.grounded, invuln: P.invuln > 0, dash_cd_s: r3(P.dashCd / 60), pulse_cd_s: r3(P.pulseCd / 60), charm_s: r3(P.charm / 60),

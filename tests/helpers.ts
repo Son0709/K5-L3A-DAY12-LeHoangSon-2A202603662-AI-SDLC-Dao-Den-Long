@@ -20,12 +20,13 @@ export interface SimOpts {
   ticks: number;
   seed?: number;
   every?: number;
+  night?: number;
 }
 
 export function sim(o: SimOpts) {
   const lines = runSim({
     seed: o.seed ?? 1,
-    night: 1,
+    night: o.night ?? 1,
     scenario: o.scenario,
     inputs: o.frames ? { frames: o.frames } : undefined,
     ticks: o.ticks,

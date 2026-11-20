@@ -37,6 +37,11 @@ Nguồn: Ticket-02 "Ba hòn đảo". Số liệu chuẩn nằm trong `game.contr
 - **A16** Điểm toàn game = tổng điểm các Đêm đã thắng (chỉ có ý nghĩa ở client; headless chạy từng Đêm).
 - **A17** Mỗi lần `--night N` bắt đầu với 3 Ngọn Lửa, điểm 0.
 
+- **A18** Quy ước góc: x = r cos(a), **z = +r sin(a)** (không phải -r sin). Lý do: tầng 1 Đêm 3 chỉ có ở nửa z > 0 mà đom đóm tầng 1 và hai dốc nằm ở góc 20°–160° / 30° / 150°; chỉ quy ước này đặt chúng lên đúng tầng. Các tập điểm Đêm 1 và 2 đối xứng qua trục X nên không đổi.
+- **A19** Điểm xuất phát Đêm 2 là (0,0,0), Đêm 3 là (0,0,-30) (tầng 0), vì (0,0,0) của Đêm 3 nằm trong tháp chuông trên tầng 2. Quay mặt về +Z. Hồi sinh sau khi rơi cũng ở điểm xuất phát.
+- **A20** Gió mạnh: chu kỳ 1800 tick, cơn thứ c (c >= 1) bắt đầu ở tick 1800c, kéo dài 300 tick, báo trước 120 tick; hướng chọn ngẫu nhiên theo seed khi bắt đầu báo trước và giữ tới hết cơn (`wind.dir_deg` hiện hướng sắp tới ngay trong lúc báo trước, `active` chỉ true khi đang thổi). Gió dịch chuyển người chơi 2 m/s theo hướng đó, vẫn bị tường chặn.
+- **A21** Gió Lạc, Bóng Mực bay lơ lửng nên đi qua vách tầng; chỉ tháp chuông chặn Bóng Mực và người chơi.
+
 ## 3. Tiêu chí nghiệm thu (acceptance criteria)
 
 **Số liệu chuẩn (Phần 1)**

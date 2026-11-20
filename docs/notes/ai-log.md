@@ -40,4 +40,13 @@ Lỗi của AI và cách xử lý (Phase 2):
 | 72/72 test đạt ngay lần đầu, có thể lỏng | Nghi ngờ, chạy mutation 10 hằng số | 2 đột biến sống (`EXPEL_TICKS`, `FALL_Y`); thêm test mốc tick rơi (tick 60) và đẩy dần; cả 10 đều bị bắt |
 | `scripts/proof.ts` (Phase 1) sẽ ghi đè bằng chứng đã tag nếu chạy với v1.1 | Rà soát tác động của đổi luật | Thêm chốt chặn theo `contract_version`, đổi tên thành `proof:phase1`; kiểm tra thật nó từ chối (mã 2) và không file nào đổi |
 
+M2 (Đêm 2 và 3): bản đồ, địa hình, bục nhảy, tầng, dốc, tháp, gió; 93 test; mutation 14/14 (1 mutant tương đương).
+
+| Lỗi (M2) | Phát hiện bằng | Xử lý |
+|---|---|---|
+| Quy ước góc trong ticket tự mâu thuẫn: "ngược chiều kim đồng hồ" cho z = -r sin(a), nhưng tầng 1 (z > 0) có đom đóm ở 20°-160° | Đọc kỹ dữ liệu Đêm 3 trước khi code | Chọn z = +r sin(a), ghi giả định A18 kèm lý do; tập điểm Đêm 1 và 2 đối xứng nên không ảnh hưởng |
+| Điểm xuất phát (0,0,0) của Đêm 3 nằm trong tháp chuông | Đối chiếu bản đồ | Chọn (0,0,-30), ghi A19 |
+| Vận tốc phóng của bục nhảy chỉ hiện ở tick sau | Test bục nhảy đỏ, thăm dò bằng script | Sửa code: đặt vận tốc ngay khi phóng |
+| Test độ rộng dốc đặt người chơi xuất phát bên trong vùng dốc, nên không phân biệt được đột biến | Mutation `across <= 2.5` vẫn sống | Sửa test: xuất phát ngoài vùng dốc, kiểm tra dừng ở vách r=24; đột biến bị bắt |
+
 Test Phase 1 bị luật Ticket-02 thay (lý do, không phải hồi quy): cost 8→10, pickup/interact radius, pulse (cost/radius/cooldown), safe radius, rìa đảo thành rơi, đom đóm mất hẳn→rơi ra vành, điểm nhặt→điểm nạp, lịch sinh Bóng Mực, `game_over` tức thì→cuối tick. Chúng được viết lại ở `tests/v11-*.test.ts` với số chuẩn; `determinism`, `cli`, `contract` được giữ/cập nhật.
