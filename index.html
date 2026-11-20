@@ -52,7 +52,7 @@
     /* prompt, arrow, toasts, hurt flash */
     #prompt { position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); font-size: 19px; padding: 8px 18px; background: #0e1430d0; border: 1px solid var(--gold); border-radius: 10px; display: none; }
     #prompt kbd, #card kbd { background: #1b2350; border: 1px solid #f2c14e88; border-radius: 6px; padding: 1px 8px; color: var(--gold); font-family: inherit; }
-    #arrow { position: absolute; width: 0; height: 0; display: none; border-left: 14px solid transparent; border-right: 14px solid transparent; border-bottom: 34px solid var(--lamp); filter: drop-shadow(0 0 6px var(--lamp)); }
+    #arrow { position: absolute; left: 0; top: 0; will-change: transform; width: 0; height: 0; display: none; border-left: 14px solid transparent; border-right: 14px solid transparent; border-bottom: 34px solid var(--lamp); filter: drop-shadow(0 0 6px var(--lamp)); }
     #toasts { position: absolute; top: 120px; left: 50%; transform: translateX(-50%); display: grid; gap: 6px; justify-items: center; }
     .toast { padding: 6px 14px; background: #0e1430d0; border-radius: 10px; font-size: 16px; animation: fade 2.4s forwards; }
     .toast.good { color: var(--lamp-core); border: 1px solid #ffb347aa; } .toast.bad { color: var(--danger); border: 1px solid #ff5a5faa; }

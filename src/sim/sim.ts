@@ -65,6 +65,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
   };
   P.grounded = P.y <= (H(P.x, P.z) ?? -Infinity) + 1e-6;
 
+  const bench = sc.bench === true; // benchmark scene (client only): see ScenarioSpec.bench
   const timeTicks = Math.round((sc.timeLeft ?? map.duration) * 60);
   let simTick = 0;
   let tickCount = 0;
@@ -296,7 +297,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
     }
     if (P.out && P.flames > 0 && P.wait > 0 && --P.wait === 0) respawnPlayer();
     // lantern fuel: every lit lantern burns 1/s; each draining shade takes 5/s more; the dead ones go out right away
-    for (const l of lanterns) if (l.lit) l.fuelU -= BURN_U;
+    if (!bench) for (const l of lanterns) if (l.lit) l.fuelU -= BURN_U;
     for (const s of shades) {
       if (!s.drain) continue;
       const l = lanterns.find((x) => x.id === s.target);
@@ -312,7 +313,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
     if (!P.out) movePlayer(inp, jumpE, dashE, tick);
 
     // 4. pickup (motes, then charms)
-    if (!P.out) {
+    if (!P.out && !bench) {
       for (let i = 0; i < motes.length; ) {
         const m = motes[i];
         if (P.carried < capacity() && within(dist(P.x, P.z, m.x, m.z), T.pickup_radius) && Math.abs(P.y - m.y) <= PICKUP_DY + EPS) {
@@ -462,7 +463,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
           else if (!dl || !isWeak(dl) || dist(s.x, s.z, dl.x, dl.z) > DRAIN_RANGE + EPS) { s.drain = false; s.target = null; s.mode = "wander"; }
         }
         if (!s.drain) {
-          if (s.mode === "wander" && d <= SHADE_DETECT + EPS) s.mode = "chase";
+          if (s.mode === "wander" && !bench && d <= SHADE_DETECT + EPS) s.mode = "chase";
           else if (s.mode === "chase" && d > SHADE_LOSE) s.mode = "wander";
           if (s.mode === "chase") {
             if (d > 0) { const st = Math.min((map.shade.speed * DT), d); shift(s, ((P.x - s.x) / d) * st, ((P.z - s.z) / d) * st); }
@@ -515,7 +516,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
     }
 
     // 9b. contact: shades hit in ascending id order, at most one flame lost per tick
-    if (!P.out && P.invuln === 0) {
+    if (!P.out && !bench && P.invuln === 0) {
       const order = [...shades].sort((a, b) => idNum(a.id) - idNum(b.id));
       for (const s of order) {
         if (s.stun > 0 || s.spawn > 0 || s.recoil > 0 || s.expel > 0) continue;
@@ -565,6 +566,7 @@ export function createSim(sc: ScenarioSpec, seed: number, night: number, onEvent
 
     // 11. win / lose, after every update of the tick (dawn tick included): no flames always loses first;
     //     at dawn Mây wins if enough lanterns are still lit; there is no early win any more
+    if (bench) return; // the benchmark scene never ends
     if (P.flames <= 0) finish("lost", "no_flames", tick);
     else if (left() <= 0) {
       const needed = Math.ceil(T.win_ratio * lanterns.length - EPS);

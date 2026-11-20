@@ -4,9 +4,12 @@ import { readFileSync } from "node:fs";
 
 const c = JSON.parse(readFileSync("game.contract.json", "utf8"));
 
-test("game.contract.json is Contract v1.2 with all required keys", () => {
-  assert.equal(c.contract_version, "1.2");
-  for (const k of ["team", "build_cmd", "run_cmd", "headless_cmd"]) assert.ok(typeof c[k] === "string" && c[k].length > 0, k);
+test("game.contract.json is Contract v1.3 with all required keys", () => {
+  assert.equal(c.contract_version, "1.3");
+  // v1.3 (Ticket-04) adds bench_cmd and soak_cmd; every v1.0-v1.2 requirement is unchanged
+  for (const k of ["team", "build_cmd", "run_cmd", "headless_cmd", "bench_cmd", "soak_cmd"]) assert.ok(typeof c[k] === "string" && c[k].length > 0, k);
+  assert.match(c.bench_cmd, /bench/);
+  assert.match(c.soak_cmd, /soak/);
   const keys = [
     "player_speed", "carry_capacity", "lantern_cost", "lantern_count_night1", "pickup_radius", "interact_radius",
     "pulse_cost", "pulse_radius", "night1_duration_s", "night2_duration_s", "night3_duration_s", "flames", "invuln_s",

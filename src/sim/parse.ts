@@ -14,6 +14,11 @@ export interface ScenarioSpec {
   charms?: { id: string; pos?: Vec3; available?: boolean; respawnS?: number }[];
   lanterns: { id: string; pos?: Vec3; deposited?: number; lit?: boolean; fuel?: number; everLit?: boolean; relitCount?: number }[];
   timeLeft?: number;
+  /**
+   * Benchmark scene (client only, never read from a scenario file): no damage, pickups, fuel burn, shade detection,
+   * spawns or end of night. Shades still wander as usual so the swarm keeps moving.
+   */
+  bench?: boolean;
 }
 
 export interface Frame {

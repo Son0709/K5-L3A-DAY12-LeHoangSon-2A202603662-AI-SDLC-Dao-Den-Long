@@ -2,6 +2,7 @@
 // Palette: Ticket-02 "Bảng màu chuẩn".
 import * as THREE from "three";
 import type { createSim } from "../sim/sim.ts";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { MapDef } from "../sim/maps.ts";
 
 type View = ReturnType<ReturnType<typeof createSim>["view"]>;
@@ -56,21 +57,14 @@ function makePlayer() {
   return grp;
 }
 
-function makeShade() {
-  const grp = new THREE.Group();
-  const mat = std(PAL.shade, { emissive: PAL.shadeEdge, emissiveIntensity: 0.55 });
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.7, 20, 16), mat);
-  body.scale.set(1, 0.9, 1);
-  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.1, 16), mat);
-  tail.rotation.x = Math.PI; tail.position.y = -0.75;
-  const eyeMat = new THREE.MeshBasicMaterial({ color: PAL.shadeEdge });
-  for (const sx of [-0.24, 0.24]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), eyeMat);
-    eye.position.set(sx, 0.15, 0.58);
-    grp.add(eye);
-  }
-  grp.add(body, tail);
-  return { grp, mat };
+/** One merged geometry per shade part, so a whole swarm is drawn with a handful of instanced draw calls (the benchmark has 200). */
+function shadeGeometries() {
+  const body = new THREE.SphereGeometry(0.7, 14, 12);
+  body.scale(1, 0.9, 1);
+  const tail = new THREE.ConeGeometry(0.55, 1.1, 12);
+  tail.rotateX(Math.PI); tail.translate(0, -0.75, 0);
+  const eyes = [-0.24, 0.24].map((sx) => { const e = new THREE.SphereGeometry(0.09, 6, 6); e.translate(sx, 0.15, 0.58); return e; });
+  return { bodyGeo: mergeGeometries([body, tail], false)!, eyeGeo: mergeGeometries(eyes, false)! };
 }
 
 function makeDrifter() {
@@ -93,7 +87,8 @@ function makeCharm() {
 }
 
 export function createWorld(host: HTMLElement) {
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const qs = new URLSearchParams(location.search);
+  const renderer = new THREE.WebGLRenderer({ antialias: !qs.has("noaa"), powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   host.appendChild(renderer.domElement);
 
@@ -116,8 +111,6 @@ export function createWorld(host: HTMLElement) {
   const padMeshes: THREE.Mesh[] = [];
 
   const lanterns = new Map<string, { glow: THREE.Mesh; mat: THREE.MeshStandardMaterial; light: THREE.PointLight; ring: THREE.Mesh }>();
-  const motes = new Map<string, THREE.Group>();
-  const shades = new Map<string, { grp: THREE.Group; mat: THREE.MeshStandardMaterial }>();
   const drifters = new Map<string, ReturnType<typeof makeDrifter>>();
   const charms = new Map<string, THREE.Group>();
   const pulses: { mesh: THREE.Mesh; age: number }[] = [];
@@ -125,6 +118,21 @@ export function createWorld(host: HTMLElement) {
   const moteGeo = new THREE.SphereGeometry(0.13, 10, 8), haloGeo = new THREE.SphereGeometry(0.36, 10, 8);
   const moteMat = new THREE.MeshBasicMaterial({ color: PAL.moteCore });
   const haloMat = new THREE.MeshBasicMaterial({ color: PAL.moteHalo, transparent: true, opacity: 0.3, depthWrite: false });
+
+  // swarms are instanced: motes (core + halo) and shades (normal / stunned look, each with body and eyes)
+  const MAX_SHADES = 320, MAX_MOTES = 160;
+  const moteCoreMesh = new THREE.InstancedMesh(moteGeo, moteMat, MAX_MOTES);
+  const moteHaloMesh = new THREE.InstancedMesh(haloGeo, haloMat, MAX_MOTES);
+  const { bodyGeo, eyeGeo } = shadeGeometries();
+  const mkShadeSet = (color: number, emissive: number, ei: number, eye: number) => ({
+    body: new THREE.InstancedMesh(bodyGeo, std(color, { emissive, emissiveIntensity: ei }), MAX_SHADES),
+    eyes: new THREE.InstancedMesh(eyeGeo, new THREE.MeshBasicMaterial({ color: eye }), MAX_SHADES),
+  });
+  const shadeNormal = mkShadeSet(PAL.shade, PAL.shadeEdge, 0.55, PAL.shadeEdge);
+  const shadeStunned = mkShadeSet(PAL.shadeStun, PAL.shadeStun, 0.4, PAL.shadeStun);
+  for (const m of [moteCoreMesh, moteHaloMesh, shadeNormal.body, shadeNormal.eyes, shadeStunned.body, shadeStunned.eyes]) {
+    m.frustumCulled = false; m.count = 0; scene.add(m);
+  }
 
   // wind leaves
   const LEAVES = 70;
@@ -261,11 +269,10 @@ export function createWorld(host: HTMLElement) {
     loadNight,
     /** Drop all per-game objects (call when a night starts or restarts). */
     reset() {
-      for (const g of motes.values()) scene.remove(g);
-      for (const s of shades.values()) scene.remove(s.grp);
       for (const d of drifters.values()) scene.remove(d.grp);
       for (const p of pulses) scene.remove(p.mesh);
-      motes.clear(); shades.clear(); drifters.clear(); pulses.length = 0;
+      drifters.clear(); pulses.length = 0;
+      for (const m of [moteCoreMesh, moteHaloMesh, shadeNormal.body, shadeNormal.eyes, shadeStunned.body, shadeStunned.eyes]) m.count = 0;
       camInit = false;
     },
     addPulse(x: number, y: number, z: number, radius: number) {
@@ -281,7 +288,7 @@ export function createWorld(host: HTMLElement) {
       const behind = tmp.z > 1;
       return { x: tmp.x, y: tmp.y, behind };
     },
-    update(v: View, safeRadius: number, t: number, dt: number, camYawDeg: number, moveDir: { x: number; z: number }, started: boolean) {
+    update(v: View, safeRadius: number, t: number, dt: number, camYawDeg: number, moveDir: { x: number; z: number }, started: boolean, cam?: { x: number; y: number; z: number }) {
       // lanterns (lit ones glow, unlit are grey)
       const lit = v.lanterns.filter((l) => l.lit).length;
       for (const l of v.lanterns) {
@@ -301,33 +308,36 @@ export function createWorld(host: HTMLElement) {
       (scene.fog as THREE.FogExp2).density = 0.013 - 0.004 * progress;
 
       // motes (dropped ones blink when about to expire)
-      const seen = new Set<string>();
-      v.motes.forEach((m, i) => {
-        seen.add(m.id);
-        let g = motes.get(m.id);
-        if (!g) {
-          g = new THREE.Group();
-          g.add(new THREE.Mesh(moteGeo, moteMat), new THREE.Mesh(haloGeo, haloMat));
-          scene.add(g); motes.set(m.id, g);
-        }
-        g.position.set(m.x, m.y + 0.9 + 0.18 * Math.sin(t * 2 + i), m.z);
-        g.visible = !(m.ttl !== null && m.ttl < 120 && Math.floor(t * 8) % 2 === 0);
-      });
-      for (const [id, g] of motes) if (!seen.has(id)) { scene.remove(g); motes.delete(id); }
-
-      // shades
-      const seenS = new Set<string>();
-      for (const s of v.shades) {
-        seenS.add(s.id);
-        let sv = shades.get(s.id);
-        if (!sv) { const m = makeShade(); scene.add(m.grp); shades.set(s.id, m); sv = m; }
-        sv.grp.position.set(s.x, s.y + 0.15 * Math.sin(t * 3 + s.x), s.z);
-        sv.grp.rotation.y = s.stunned ? t * 6 : Math.atan2(v.player.x - s.x, v.player.z - s.z);
-        sv.mat.color.setHex(s.stunned ? PAL.shadeStun : PAL.shade);
-        sv.mat.emissive.setHex(s.stunned ? PAL.shadeStun : PAL.shadeEdge);
-        sv.mat.emissiveIntensity = s.stunned ? 0.4 : s.state === "spawning" ? 0.2 + 0.3 * Math.sin(t * 10) ** 2 : 0.55;
+      let mc = 0;
+      dummy.rotation.set(0, 0, 0);
+      for (let i = 0; i < v.motes.length && mc < MAX_MOTES; i++) {
+        const m = v.motes[i];
+        const blink = m.ttl !== null && m.ttl < 120 && Math.floor(t * 8) % 2 === 0;
+        dummy.position.set(m.x, m.y + 0.9 + 0.18 * Math.sin(t * 2 + i), m.z);
+        dummy.scale.setScalar(blink ? 0.0001 : 1);
+        dummy.updateMatrix();
+        moteCoreMesh.setMatrixAt(mc, dummy.matrix); moteHaloMesh.setMatrixAt(mc, dummy.matrix);
+        mc++;
       }
-      for (const [id, s] of shades) if (!seenS.has(id)) { scene.remove(s.grp); shades.delete(id); }
+      moteCoreMesh.count = moteHaloMesh.count = mc;
+      moteCoreMesh.instanceMatrix.needsUpdate = moteHaloMesh.instanceMatrix.needsUpdate = true;
+
+      // shades: instanced, one set for the normal look and one for stunned
+      let nn = 0, ns = 0;
+      dummy.scale.setScalar(1);
+      for (const s of v.shades) {
+        const set = s.stunned ? shadeStunned : shadeNormal;
+        const idx = s.stunned ? ns : nn;
+        if (idx >= MAX_SHADES) continue;
+        dummy.position.set(s.x, s.y + 0.15 * Math.sin(t * 3 + s.x), s.z);
+        dummy.rotation.set(0, s.stunned ? t * 6 : Math.atan2(v.player.x - s.x, v.player.z - s.z), 0);
+        dummy.updateMatrix();
+        set.body.setMatrixAt(idx, dummy.matrix); set.eyes.setMatrixAt(idx, dummy.matrix);
+        if (s.stunned) ns++; else nn++;
+      }
+      shadeNormal.body.count = shadeNormal.eyes.count = nn;
+      shadeStunned.body.count = shadeStunned.eyes.count = ns;
+      for (const m of [shadeNormal.body, shadeNormal.eyes, shadeStunned.body, shadeStunned.eyes]) m.instanceMatrix.needsUpdate = true;
 
       // drifters (Gió Lạc): grey-blue ribbons
       const seenD = new Set<string>();
@@ -399,12 +409,18 @@ export function createWorld(host: HTMLElement) {
       leafMesh.instanceMatrix.needsUpdate = true;
 
       // camera: third person, behind the movement-forward direction of cam_yaw
-      const th = (camYawDeg * Math.PI) / 180;
-      const want = tmp.set(p.x + Math.sin(th) * 9.5, p.y + 5.2, p.z + Math.cos(th) * 9.5).clone();
-      if (!camInit || !started) { camPos.copy(want); camInit = true; }
-      else camPos.lerp(want, 1 - Math.exp(-9 * dt));
-      camera.position.copy(camPos);
-      camera.lookAt(p.x, p.y + 1.3, p.z);
+      if (cam) {
+        // fixed camera path supplied by the caller (the benchmark orbit); always looks at the origin
+        camera.position.set(cam.x, cam.y, cam.z);
+        camera.lookAt(0, 0, 0);
+      } else {
+        const th = (camYawDeg * Math.PI) / 180;
+        const want = tmp.set(p.x + Math.sin(th) * 9.5, p.y + 5.2, p.z + Math.cos(th) * 9.5).clone();
+        if (!camInit || !started) { camPos.copy(want); camInit = true; }
+        else camPos.lerp(want, 1 - Math.exp(-9 * dt));
+        camera.position.copy(camPos);
+        camera.lookAt(p.x, p.y + 1.3, p.z);
+      }
 
       renderer.render(scene, camera);
     },
