@@ -78,4 +78,30 @@ M4 (client): chuỗi 3 Đêm, menu/giới thiệu Đêm (Ông Đăng)/kết qu�
 
 Chưa kiểm chứng ở client (ghi trong bằng chứng): nhánh thắng/Bình Minh, âm thanh, Gió Lạc và bục nhảy trong cảnh 3D, chơi tay trọn ván.
 
+## Phase 3 (Ticket-03, Contract v1.2: đèn cạn dầu)
+
+Quy trình: đọc ticket, liệt kê luật bị thay và giả định, viết ADR + CHANGELOG, viết test v1.2 trước, rồi sửa lõi. Mutation check 22/22.
+
+Test Phase 2 bị luật Ticket-03 làm sai (11 test), mỗi cái được sửa hoặc xóa kèm lý do, không có test nào bị skip:
+
+| Test | Việc làm | Lý do |
+|---|---|---|
+| `contract`: v1.1 keys, tuning numbers | viết lại cho v1.2 | contract_version, thời lượng Đêm 240/270/300, khóa nhiên liệu và bảng điểm mới |
+| `v11-core`: snapshot tick 0, `time_left_s` | đổi 300 thành 240, 299 thành 239 | Đêm 1 ngắn lại |
+| `v11-maps`: Night 2 và 3 snapshot | đổi 330 thành 270, 360 thành 300 | như trên |
+| `v11-core`: "last lantern: all_lit wins ... floor(s) x 2" | **xóa** | không còn thắng sớm và không còn thưởng thời gian; luật dawn được test ở `v12-fuel` |
+| `v11-items`: full deposit và partial deposit (điểm) | đổi điểm 10/mote thành 5/mote | điểm mỗi đom đóm nạp đổi |
+| `v11-items`: "lit lanterns are skipped" | bỏ dòng đó, chuyển sang `v12-fuel` | đèn sáng chưa đầy dầu nay là đèn nhận được |
+
+Lỗi của AI và cách xử lý (Phase 3):
+
+| Lỗi | Phát hiện bằng | Xử lý |
+|---|---|---|
+| Hai kỳ vọng sai trong test mới: hướng đi của Bóng Mực (tính thiếu thành phần chéo, 0.89 chứ không phải > 1) và đặt đèn ở 40 dầu (không phải đèn yếu nên không hút được) | Test mới đỏ, đọc từng lỗi | Sửa test (code đúng theo ticket), ghi chú tính tay trong test |
+| Kỳ vọng "sau choáng về wander" bỏ qua việc wander kiểm tra tầm 12 m ngay lúc đó | Test đỏ, giá trị thật là `chase` | Sửa test: kiểm tra "không còn drain" thay vì ép đúng chữ `wander` |
+| Đổi tuning làm client không biên dịch (`per_second_left` đã bị bỏ) | `npm run typecheck` đỏ ngay sau khi sửa lõi | Sửa tối thiểu client để biên dịch lại; phần client đầy đủ làm sau |
+| Thứ tự trong tick làm "đèn đầy dầu không được chọn" gần như không bao giờ xảy ra (hao dầu ở bước 2 trước khi tương tác ở bước 5) | Tính tay khi viết test refuel | Ghi chú trong test; test refuel dùng dầu 55 để tránh nhập nhằng; rủi ro đã ghi trong ADR |
+
+Giả định chưa được xác nhận: Bóng Mực wander đi tới đèn với `shade_speed`; `refuel` không phát `deposit`.
+
 Test Phase 1 bị luật Ticket-02 thay (lý do, không phải hồi quy): cost 8→10, pickup/interact radius, pulse (cost/radius/cooldown), safe radius, rìa đảo thành rơi, đom đóm mất hẳn→rơi ra vành, điểm nhặt→điểm nạp, lịch sinh Bóng Mực, `game_over` tức thì→cuối tick. Chúng được viết lại ở `tests/v11-*.test.ts` với số chuẩn; `determinism`, `cli`, `contract` được giữ/cập nhật.
