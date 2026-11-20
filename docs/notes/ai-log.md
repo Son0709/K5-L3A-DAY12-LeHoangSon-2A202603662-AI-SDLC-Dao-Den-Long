@@ -24,3 +24,20 @@ Cách tiết kiệm: AGENTS.md ngắn, chốt giả định trước khi code, v
 | Bằng chứng ban đầu 23/23 đạt ngay lần đầu, có thể là đạt cho có | Tự nghi ngờ | Mutation check: đổi một con số tuning, `proof` phải trượt, rồi hoàn nguyên |
 
 Bài học cho harness: kiểm tra `git status` sau mỗi lần commit; mọi bằng chứng phải sinh từ lệnh chạy thật (`npm run proof`), không viết tay.
+
+## Phase 2
+
+| Bước | Việc | Token/chi phí ước tính |
+|---|---|---|
+| Spec | Đọc Ticket-02, viết `phase2-spec.md`: bảng luật bị thay, 17 giả định, tiêu chí nghiệm thu | chưa ghi |
+| M1 | Lõi v1.1 Đêm 1: số chuẩn, vật lý, lướt, rơi đảo, pause, thứ tự 12 bước, snapshot/sự kiện mới | chưa ghi |
+| Test | Thay test Phase 1 bằng `tests/v11-*` (72 test); mutation check 10 hằng số | chưa ghi |
+
+Lỗi của AI và cách xử lý (Phase 2):
+
+| Lỗi | Phát hiện bằng | Xử lý |
+|---|---|---|
+| 72/72 test đạt ngay lần đầu, có thể lỏng | Nghi ngờ, chạy mutation 10 hằng số | 2 đột biến sống (`EXPEL_TICKS`, `FALL_Y`); thêm test mốc tick rơi (tick 60) và đẩy dần; cả 10 đều bị bắt |
+| `scripts/proof.ts` (Phase 1) sẽ ghi đè bằng chứng đã tag nếu chạy với v1.1 | Rà soát tác động của đổi luật | Thêm chốt chặn theo `contract_version`, đổi tên thành `proof:phase1`; kiểm tra thật nó từ chối (mã 2) và không file nào đổi |
+
+Test Phase 1 bị luật Ticket-02 thay (lý do, không phải hồi quy): cost 8→10, pickup/interact radius, pulse (cost/radius/cooldown), safe radius, rìa đảo thành rơi, đom đóm mất hẳn→rơi ra vành, điểm nhặt→điểm nạp, lịch sinh Bóng Mực, `game_over` tức thì→cuối tick. Chúng được viết lại ở `tests/v11-*.test.ts` với số chuẩn; `determinism`, `cli`, `contract` được giữ/cập nhật.
