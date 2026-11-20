@@ -1,0 +1,46 @@
+{
+  "random_motes": false,
+  "random_shades": false,
+  "random_drifters": false,
+  "motes": [],
+  "shades": [],
+  "drifters": [],
+  "lanterns": [
+    {
+      "id": "L1",
+      "lit": true
+    },
+    {
+      "id": "L2",
+      "lit": true
+    },
+    {
+      "id": "L3",
+      "lit": true
+    },
+    {
+      "id": "L4",
+      "lit": true
+    },
+    {
+      "id": "L5",
+      "lit": true
+    },
+    {
+      "id": "L6",
+      "lit": false
+    },
+    {
+      "id": "L7",
+      "lit": false
+    }
+  ],
+  "time_left_s": 0.5,
+  "player": {
+    "pos": [
+      0,
+      0,
+      -30
+    ]
+  }
+}
